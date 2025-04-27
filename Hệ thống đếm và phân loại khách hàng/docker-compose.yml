@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # Ứng dụng frontend cho người dùng
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    volumes:
+      - ./frontend:/app
+    restart: always
+    networks:
+      - customer-analytics
+
+  # Ứng dụng frontend cho admin
+  admin:
+    build: ./admin
+    ports:
+      - "3001:80"
+    depends_on:
+      - api
+    volumes:
+      - ./admin:/app
+    restart: always
+    networks:
+      - customer-analytics
+
+  # API backend cho phân tích và xử lý dữ liệu
+  api:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+      - ai-service
+    volumes:
+      - ./backend:/app
+    environment:
+      - MONGODB_URI=mongodb://db:27017/customer_analytics
+      - AI_SERVICE_URL=http://ai-service:8000
+    restart: always
+    networks:
+      - customer-analytics
+
+  # Service xử lý AI
+  ai-service:
+    build: ./ai-service
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./ai-service:/app
+      - ./ai-service/models:/app/models
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
+      - MODEL_PATH=/app/models
+    restart: always
+    networks:
+      - customer-analytics
+
+  # Database MongoDB
+  db:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: always
+    networks:
+      - customer-analytics
+
+networks:
+  customer-analytics:
+    driver: bridge
+
+volumes:
+  mongodb_data:
