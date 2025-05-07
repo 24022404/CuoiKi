@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Analytics Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Customer Analytics System</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item active">
+                    <a class="nav-link" href="index.html">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="admin.html">Admin Panel</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Live Camera Feed</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <img id="video-feed" src="" alt="Video Feed" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Current Statistics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="stats-container">
+                            <div class="stat-item">
+                                <h6>Total Customers</h6>
+                                <p id="total-count" class="stat-value">0</p>
+                            </div>
+                            <div class="stat-item">
+                                <h6>Male</h6>
+                                <p id="male-count" class="stat-value">0</p>
+                            </div>
+                            <div class="stat-item">
+                                <h6>Female</h6>
+                                <p id="female-count" class="stat-value">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Age Distribution</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="age-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Staff Recommendations</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="staff-recommendations">
+                            <!-- Recommendations will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Historical Data</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="historical-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+Hệ thống đếm và phân loại khách hàng trong cửa hàng. Nội dung bao gồm:
+Chức năng chính
+
+Quay video trong thời gian thực tại cửa hàng
+Đếm tổng số người có mặt trong cửa hàng
+Phân tích nhân khẩu học:
+
+Xác định độ tuổi của từng khách hàng
+Xác định giới tính của từng khách hàng
+
+
+
+Mục đích ứng dụng
+
+Tối ưu hóa phân bổ nhân viên:
+
+Khi nhiều khách hàng trẻ → phân công nhiều nhân viên trẻ phục vụ
+Khi nhiều khách hàng lớn tuổi → phân công nhân viên chuyên nghiệp, có kinh nghiệm
+
+
+Quản lý vận hành hiệu quả:
+
+Điều chỉnh số lượng nhân viên theo lưu lượng khách
+
+
+=> Làm việc trong folder Hệ thống đếm và phân loại khách hàng trong cửa hàng sử dụng Deepface

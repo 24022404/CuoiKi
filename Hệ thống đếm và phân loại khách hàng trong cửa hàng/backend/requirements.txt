@@ -1,0 +1,6 @@
+flask
+opencv-python
+numpy
+flask-cors
+gunicorn
+# deepface sẽ được sử dụng từ thư mục local đã clone
