@@ -1,281 +1,275 @@
-// Configuration
+// Global variables
+let isVideoPaused = false;
+let videoFeed = null;
+let capturedImageData = null;
 const API_URL = 'http://localhost:5000';
-let ageChart, historicalChart;
 
-// Initialize the page
-document.addEventListener('DOMContentLoaded', function() {
-    // Check if backend is available
+// DOM elements
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize elements
+    videoFeed = document.getElementById('videoFeed');
+    const toggleVideoBtn = document.getElementById('toggleVideo');
+    const captureImageBtn = document.getElementById('captureImage');
+    const videoStatus = document.getElementById('videoStatus');
+    const saveImageBtn = document.getElementById('saveImage');
+    
+    // Check backend connection
     checkBackendConnection();
     
-    // Initialize charts
-    initAgeChart();
-    initHistoricalChart();
+    // Initialize data refresh
+    refreshAnalyticsData();
+    setInterval(refreshAnalyticsData, 5000); // Refresh every 5 seconds
     
-    // Start refreshing data
-    refreshData();
-    setInterval(refreshData, 5000);
+    // Toggle video feed
+    toggleVideoBtn.addEventListener('click', () => {
+        if (isVideoPaused) {
+            // Resume video
+            videoFeed.src = `${API_URL}/video_feed?t=${new Date().getTime()}`;
+            toggleVideoBtn.innerHTML = '<i class="bi bi-pause-fill"></i> Tạm Dừng';
+            isVideoPaused = false;
+        } else {
+            // Pause video by setting a blank image
+            videoFeed.src = '';
+            toggleVideoBtn.innerHTML = '<i class="bi bi-play-fill"></i> Tiếp Tục';
+            isVideoPaused = true;
+        }
+    });
     
-    // Load historical data
-    loadHistoricalData();
+    // Capture image
+    captureImageBtn.addEventListener('click', captureImage);
+    
+    // Save captured image
+    saveImageBtn.addEventListener('click', saveImage);
 });
 
-// Check if backend server is running
+// Check if backend is running
 function checkBackendConnection() {
-    // Try to get video feed
-    const videoFeed = document.getElementById('video-feed');
-    videoFeed.src = `${API_URL}/video_feed`;
+    const videoStatus = document.getElementById('videoStatus');
     
-    // Add error handling for video feed
-    videoFeed.onerror = function() {
-        showBackendError();
-    };
-    
-    // Also do a direct check
-    fetch(`${API_URL}/`)
+    fetch(`${API_URL}/camera_status`)
         .then(response => {
-            if (response.ok) {
-                // Backend is running, nothing to do
-                console.log("Backend connection successful");
+            if (!response.ok) {
+                throw new Error('Backend server is not available');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'ok') {
+                videoStatus.classList.add('d-none');
             } else {
-                showBackendError();
+                showError('Camera Error', data.message);
             }
         })
         .catch(error => {
-            showBackendError();
+            console.error('Error connecting to backend:', error);
+            videoStatus.textContent = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra xem backend có đang chạy không.';
+            videoStatus.classList.remove('d-none');
+            videoStatus.classList.remove('alert-info');
+            videoStatus.classList.add('alert-danger');
         });
 }
 
-function showBackendError() {
-    // Create error message
-    const videoContainer = document.querySelector('.card-body.text-center');
-    if (!document.getElementById('backend-error')) {
-        const errorDiv = document.createElement('div');
-        errorDiv.id = 'backend-error';
-        errorDiv.className = 'alert alert-danger mt-3';
-        errorDiv.innerHTML = `
-            <strong>Không thể kết nối đến backend!</strong>
-            <p>Đảm bảo rằng bạn đã chạy Flask backend với lệnh:</p>
-            <pre>cd backend
-python app.py</pre>
-            <p>Backend phải đang chạy tại địa chỉ: ${API_URL}</p>
-        `;
-        videoContainer.appendChild(errorDiv);
-    }
-}
-
-// Refresh current data
-function refreshData() {
+// Refresh analytics data from backend
+function refreshAnalyticsData() {
     fetch(`${API_URL}/latest_analysis`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch analytics data');
+            }
+            return response.json();
+        })
         .then(data => {
-            updateStatistics(data);
-            updateAgeChart(data);
-            generateStaffRecommendations(data);
+            updateCounters(data);
+            updateAgeGroups(data);
+            generateRecommendations(data);
         })
         .catch(error => {
-            console.error('Error fetching latest analysis:', error);
-            // Don't show error message here as we already handle it in checkBackendConnection
+            console.error('Error fetching analytics data:', error);
         });
 }
 
-// Update statistics display
-function updateStatistics(data) {
-    document.getElementById('total-count').textContent = data.total_count;
-    document.getElementById('male-count').textContent = data.male_count;
-    document.getElementById('female-count').textContent = data.female_count;
+// Update the counter displays
+function updateCounters(data) {
+    document.getElementById('totalCount').textContent = data.total_count;
+    document.getElementById('maleCount').textContent = data.male_count;
+    document.getElementById('femaleCount').textContent = data.female_count;
 }
 
-// Initialize age distribution chart
-function initAgeChart() {
-    const ctx = document.getElementById('age-chart').getContext('2d');
-    ageChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Young (0-20)', 'Adult (21-40)', 'Middle-aged (41-60)', 'Elderly (60+)'],
-            datasets: [{
-                data: [0, 0, 0, 0],
-                backgroundColor: [
-                    '#36A2EB',  // Blue
-                    '#FFCE56',  // Yellow
-                    '#4BC0C0',  // Teal
-                    '#FF6384'   // Red
-                ]
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            legend: {
-                position: 'bottom'
-            }
-        }
-    });
-}
-
-// Update age chart with new data
-function updateAgeChart(data) {
+// Update age group displays
+function updateAgeGroups(data) {
     const ageGroups = data.age_groups;
-    ageChart.data.datasets[0].data = [
-        ageGroups.young,
-        ageGroups.adult,
-        ageGroups.middle_aged,
-        ageGroups.elderly
-    ];
-    ageChart.update();
+    const total = data.total_count || 1; // Avoid division by zero
+    
+    // Update counters
+    document.getElementById('youngCount').textContent = ageGroups.young;
+    document.getElementById('adultCount').textContent = ageGroups.adult;
+    document.getElementById('middleAgedCount').textContent = ageGroups.middle_aged;
+    document.getElementById('elderlyCount').textContent = ageGroups.elderly;
+    
+    // Update progress bars
+    document.getElementById('youngBar').style.width = `${(ageGroups.young / total) * 100}%`;
+    document.getElementById('adultBar').style.width = `${(ageGroups.adult / total) * 100}%`;
+    document.getElementById('middleAgedBar').style.width = `${(ageGroups.middle_aged / total) * 100}%`;
+    document.getElementById('elderlyBar').style.width = `${(ageGroups.elderly / total) * 100}%`;
 }
 
-// Generate staff recommendations based on customer demographics
-function generateStaffRecommendations(data) {
-    const recommendationsElement = document.getElementById('staff-recommendations');
-    const recommendations = [];
+// Generate staffing recommendations based on customer data
+function generateRecommendations(data) {
+    const recommendationsElement = document.getElementById('recommendations');
+    let recommendations = '';
     
-    // Clear previous recommendations
-    recommendationsElement.innerHTML = '';
-    
-    // Total count recommendation
-    if (data.total_count > 10) {
-        recommendations.push({
-            title: 'High Traffic Alert',
-            text: `Currently ${data.total_count} customers in store. Consider adding more staff to the floor.`
-        });
-    } else if (data.total_count < 3) {
-        recommendations.push({
-            title: 'Low Traffic Alert',
-            text: `Only ${data.total_count} customers in store. Consider reducing floor staff.`
-        });
-    }
-    
-    // Age-based recommendations
-    const ageGroups = data.age_groups;
-    if (ageGroups.young > ageGroups.adult && ageGroups.young > ageGroups.middle_aged && ageGroups.young > ageGroups.elderly) {
-        recommendations.push({
-            title: 'Young Customer Majority',
-            text: 'Majority of customers are young. Consider assigning younger staff members who can better relate to their preferences.'
-        });
-    } else if (ageGroups.elderly > 0 && ageGroups.elderly >= ageGroups.young) {
-        recommendations.push({
-            title: 'Elderly Customers Present',
-            text: 'Significant number of elderly customers. Ensure experienced staff are available to provide assistance.'
-        });
-    }
-    
-    // Gender-based recommendations
-    if (data.male_count > 2 * data.female_count) {
-        recommendations.push({
-            title: 'Male-Dominated Customer Base',
-            text: 'Currently more male customers. Consider adjusting staff accordingly.'
-        });
-    } else if (data.female_count > 2 * data.male_count) {
-        recommendations.push({
-            title: 'Female-Dominated Customer Base',
-            text: 'Currently more female customers. Consider adjusting staff accordingly.'
-        });
-    }
-    
-    // Display recommendations
-    if (recommendations.length === 0) {
-        recommendationsElement.innerHTML = '<p>No specific recommendations at this time.</p>';
+    // Tạo khuyến nghị dựa trên số lượng khách hàng
+    if (data.total_count === 0) {
+        recommendations = '<p>Chưa phát hiện khách hàng nào. Đảm bảo camera đang hoạt động và có người trong tầm nhìn.</p>';
     } else {
-        recommendations.forEach(rec => {
-            const recBox = document.createElement('div');
-            recBox.classList.add('recommendation-box');
-            
-            const recTitle = document.createElement('div');
-            recTitle.classList.add('recommendation-title');
-            recTitle.textContent = rec.title;
-            
-            const recText = document.createElement('div');
-            recText.textContent = rec.text;
-            
-            recBox.appendChild(recTitle);
-            recBox.appendChild(recText);
-            recommendationsElement.appendChild(recBox);
-        });
-    }
-}
-
-// Initialize historical data chart
-function initHistoricalChart() {
-    const ctx = document.getElementById('historical-chart').getContext('2d');
-    historicalChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [
-                {
-                    label: 'Total Customers',
-                    borderColor: '#007bff',
-                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                    data: []
-                },
-                {
-                    label: 'Male',
-                    borderColor: '#28a745',
-                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                    data: []
-                },
-                {
-                    label: 'Female',
-                    borderColor: '#dc3545',
-                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                    data: []
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                xAxes: [{
-                    type: 'time',
-                    time: {
-                        unit: 'hour',
-                        displayFormats: {
-                            hour: 'MMM D, HH:mm'
-                        }
-                    },
-                    scaleLabel: {
-                        display: true,
-                        labelString: 'Time'
-                    }
-                }],
-                yAxes: [{
-                    scaleLabel: {
-                        display: true,
-                        labelString: 'Count'
-                    },
-                    ticks: {
-                        beginAtZero: true
-                    }
-                }]
-            }
+        recommendations = '<h6>Khuyến Nghị Nhân Sự:</h6><ul>';
+        
+        // Khuyến nghị dựa trên tổng số người
+        if (data.total_count > 10) {
+            recommendations += '<li>Đông khách: Cần bổ sung thêm nhân viên phục vụ.</li>';
+        } else if (data.total_count > 5) {
+            recommendations += '<li>Lượng khách trung bình: Duy trì số lượng nhân viên hiện tại.</li>';
+        } else {
+            recommendations += '<li>Ít khách: Có thể điều chuyển bớt nhân viên.</li>';
         }
-    });
+        
+        // Khuyến nghị dựa trên phân bố độ tuổi
+        const ageGroups = data.age_groups;
+        if (ageGroups.young > Math.max(ageGroups.adult, ageGroups.middle_aged, ageGroups.elderly)) {
+            recommendations += '<li>Nhiều khách hàng trẻ: Nên bố trí nhân viên trẻ, năng động.</li>';
+        } else if (ageGroups.elderly > Math.max(ageGroups.young, ageGroups.adult, ageGroups.middle_aged)) {
+            recommendations += '<li>Nhiều khách hàng cao tuổi: Nên bố trí nhân viên có kinh nghiệm, kiên nhẫn.</li>';
+        }
+        
+        // Khuyến nghị dựa trên giới tính
+        if (data.male_count > data.female_count * 2) {
+            recommendations += '<li>Đa số khách hàng nam: Cân nhắc điều chỉnh sản phẩm trưng bày phù hợp.</li>';
+        } else if (data.female_count > data.male_count * 2) {
+            recommendations += '<li>Đa số khách hàng nữ: Cân nhắc điều chỉnh sản phẩm trưng bày phù hợp.</li>';
+        }
+        
+        recommendations += '</ul>';
+    }
+    
+    recommendationsElement.innerHTML = recommendations;
 }
 
-// Load historical data for charts
-function loadHistoricalData() {
-    fetch(`${API_URL}/historical_data`)
-        .then(response => response.json())
-        .then(data => {
-            updateHistoricalChart(data);
+// Capture current video frame
+function captureImage() {
+    if (isVideoPaused) {
+        showError('Video Paused', 'Please resume the video before capturing an image.');
+        return;
+    }
+    
+    // Create canvas to capture frame
+    const canvas = document.createElement('canvas');
+    const video = document.getElementById('videoFeed');
+    
+    // Check if video is available
+    if (!video || !video.complete) {
+        showError('Video Not Ready', 'The video feed is not ready for capture. Please wait.');
+        return;
+    }
+    
+    // Set canvas dimensions to match video
+    canvas.width = video.width;
+    canvas.height = video.height;
+    
+    // Draw video frame to canvas
+    const context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Get image data as base64
+    capturedImageData = canvas.toDataURL('image/jpeg');
+    
+    // Display in modal
+    const capturedImage = document.getElementById('capturedImage');
+    capturedImage.src = capturedImageData;
+    
+    // Analyze the captured image
+    analyzeImage(capturedImageData);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('capturedImageModal'));
+    modal.show();
+}
+
+// Analyze captured image using backend API
+function analyzeImage(imageData) {
+    const analysisElement = document.getElementById('capturedImageAnalysis');
+    analysisElement.innerHTML = '<p class="text-center"><i class="bi bi-arrow-repeat spinning"></i> Đang phân tích ảnh...</p>';
+    
+    fetch(`${API_URL}/analyze`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ image: imageData }),
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Image analysis failed');
+            }
+            return response.json();
         })
-        .catch(error => console.error('Error fetching historical data:', error));
+        .then(data => {
+            // Display analysis results
+            let analysis = `<h5>Kết Quả Phân Tích</h5>
+                            <p>Tổng số người: <strong>${data.total_count}</strong></p>
+                            <div class="row">
+                                <div class="col-6">
+                                    <p>Nam: <strong>${data.male_count}</strong></p>
+                                </div>
+                                <div class="col-6">
+                                    <p>Nữ: <strong>${data.female_count}</strong></p>
+                                </div>
+                            </div>
+                            <h6>Phân Bố Độ Tuổi:</h6>
+                            <ul>
+                                <li>Trẻ (0-20): <strong>${data.age_groups.young}</strong></li>
+                                <li>Thanh niên (21-40): <strong>${data.age_groups.adult}</strong></li>
+                                <li>Trung niên (41-60): <strong>${data.age_groups.middle_aged}</strong></li>
+                                <li>Cao tuổi (60+): <strong>${data.age_groups.elderly}</strong></li>
+                            </ul>`;
+            
+            analysisElement.innerHTML = analysis;
+        })
+        .catch(error => {
+            console.error('Error analyzing image:', error);
+            analysisElement.innerHTML = '<p class="text-danger">Không thể phân tích ảnh. Vui lòng thử lại.</p>';
+        });
 }
 
-// Update historical chart with data
-function updateHistoricalChart(data) {
-    if (!data || data.length === 0) return;
+// Save captured image to device
+function saveImage() {
+    if (!capturedImageData) {
+        return;
+    }
     
-    const labels = data.map(item => new Date(item.timestamp));
-    const totalData = data.map(item => item.total_count);
-    const maleData = data.map(item => item.male_count);
-    const femaleData = data.map(item => item.female_count);
-    
-    historicalChart.data.labels = labels;
-    historicalChart.data.datasets[0].data = totalData;
-    historicalChart.data.datasets[1].data = maleData;
-    historicalChart.data.datasets[2].data = femaleData;
-    
-    historicalChart.update();
+    // Create a link element to download the image
+    const link = document.createElement('a');
+    link.download = `customer-snapshot-${new Date().toISOString().replace(/:/g, '-')}.jpg`;
+    link.href = capturedImageData;
+    link.click();
 }
+
+// Show error message
+function showError(title, message) {
+    // You can implement a toast or alert system here
+    console.error(`${title}: ${message}`);
+    alert(`${title}: ${message}`);
+}
+
+// Add a class for spinning icons
+document.head.insertAdjacentHTML('beforeend', `
+    <style>
+        .spinning {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+`);

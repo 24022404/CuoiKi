@@ -1,64 +1,418 @@
-body {
-    background-color: #f5f5f5;
+:root {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+    --info-color: #0dcaf0;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
 }
 
-.card {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+body {
+    background-color: #f5f5f5;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Video container styles */
+#videoContainer {
+    position: relative;
+    background-color: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    min-height: 240px;
+}
+
+#videoFeed {
+    max-width: 100%;
+    max-height: 60vh;
+    border-radius: 8px;
+}
+
+/* Face detection box */
+.face-box {
+    position: absolute;
+    border: 2px solid var(--success-color);
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.face-box.male {
+    border-color: #1976d2;
+}
+
+.face-box.female {
+    border-color: #d81b60;
+}
+
+.face-label {
+    position: absolute;
+    top: -25px;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+/* Control panel */
+.control-panel {
+    background-color: white;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.control-panel .btn {
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+/* Status indicator */
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.status-indicator.active {
+    background-color: var(--success-color);
+    box-shadow: 0 0 5px var(--success-color);
+}
+
+.status-indicator.inactive {
+    background-color: var(--danger-color);
+    box-shadow: 0 0 5px var(--danger-color);
+}
+
+/* Dashboard counter styles */
+.dashboard-counter {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
     margin-bottom: 20px;
 }
 
-.stats-container {
+.counter-row {
     display: flex;
-    justify-content: space-between;
+    gap: 15px;
 }
 
-.stat-item {
-    text-align: center;
+.counter-card {
+    display: flex;
+    align-items: center;
+    background-color: var(--light-color);
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     flex: 1;
-    padding: 10px;
-    border-radius: 5px;
-    background-color: #f8f9fa;
-    margin: 0 5px;
+    transition: transform 0.3s ease;
 }
 
-.stat-value {
+.counter-card:hover {
+    transform: translateY(-5px);
+}
+
+.counter-card.total {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.counter-card.male {
+    background-color: #e3f2fd;
+    border-left: 4px solid #1976d2;
+}
+
+.counter-card.female {
+    background-color: #fce4ec;
+    border-left: 4px solid #d81b60;
+}
+
+.counter-card.young {
+    background-color: #e8f5e9;
+    border-left: 4px solid #4caf50;
+}
+
+.counter-card.adult {
+    background-color: #fff3e0;
+    border-left: 4px solid #ff9800;
+}
+
+.counter-card.senior {
+    background-color: #efebe9;
+    border-left: 4px solid #795548;
+}
+
+.counter-icon {
+    font-size: 28px;
+    margin-right: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.counter-details h3 {
     font-size: 24px;
     font-weight: bold;
-    margin: 5px 0;
+    margin: 0;
 }
 
-#video-feed {
-    max-width: 100%;
-    height: auto;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+.counter-details p {
+    margin: 0;
+    font-size: 14px;
 }
 
-#staff-recommendations {
-    padding: 10px;
-    background-color: #f0f8ff;
-    border-radius: 5px;
-    min-height: 80px;
+/* Age group progress bars */
+.age-group-bars {
+    margin-top: 15px;
 }
 
-.table-responsive {
-    overflow-x: auto;
+.progress {
+    height: 12px;
+    margin-bottom: 10px;
+}
+
+.progress-thin {
+    height: 8px;
+}
+
+/* Real-time analytics section */
+.analytics-section {
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.analytics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.analytics-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.time-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.time-selector .btn-sm {
+    padding: 3px 8px;
+    font-size: 12px;
+}
+
+/* Recommendation box */
+.recommendation-box {
+    background-color: #f8f9fa;
+    border-left: 4px solid var(--primary-color);
+    padding: 15px;
+    border-radius: 4px;
+    margin-top: 20px;
+}
+
+.recommendation-box h5 {
+    color: var(--primary-color);
+    margin-top: 0;
+}
+
+/* Admin styles */
+.tab-content {
+    border-radius: 0 0 8px 8px;
+    padding: 20px;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-top: none;
+}
+
+.nav-tabs .nav-link {
+    font-weight: 500;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: #fff;
+    border-bottom-color: #fff;
+}
+
+/* Chart containers */
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin-bottom: 20px;
 }
 
 canvas {
     max-width: 100%;
 }
 
-.recommendation-box {
-    padding: 15px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    border-left: 4px solid #007bff;
-    background-color: #f8f9fa;
+/* Table styles */
+.table {
+    font-size: 0.9rem;
 }
 
-.recommendation-title {
-    font-weight: bold;
-    color: #007bff;
+.table thead th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f1f8ff;
+}
+
+/* Customer details modal */
+.customer-details-modal .modal-content {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.customer-details-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.customer-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--light-color);
+}
+
+.customer-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.customer-info-item {
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+}
+
+.customer-info-label {
+    font-size: 12px;
+    color: var(--secondary-color);
     margin-bottom: 5px;
+}
+
+.customer-info-value {
+    font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .counter-row {
+        flex-wrap: wrap;
+    }
+    
+    .counter-card {
+        flex-basis: calc(50% - 15px);
+    }
+}
+
+@media (max-width: 768px) {
+    .counter-row {
+        flex-direction: column;
+    }
+    
+    .counter-card {
+        flex-basis: 100%;
+    }
+    
+    .card-header {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .card-header > div {
+        margin-top: 10px;
+    }
+    
+    .customer-info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 576px) {
+    .analytics-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .time-selector {
+        margin-top: 10px;
+    }
+}
+
+/* Modal styles */
+#capturedImageAnalysis {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: left;
+}
+
+/* Button hover effects */
+.btn {
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Animation effects */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.pulse {
+    animation: pulse 1.5s infinite;
+}
+
+/* Loading spinner */
+.spinner-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    padding: 30px;
+}
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
 }

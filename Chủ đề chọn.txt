@@ -1,26 +1,46 @@
-Hệ thống đếm và phân loại khách hàng trong cửa hàng. Nội dung bao gồm:
-Chức năng chính
+Dự án Hệ thống Đếm và Phân loại Khách hàng trong Cửa hàng sử dụng DeepFace
 
-Quay video trong thời gian thực tại cửa hàng
-Đếm tổng số người có mặt trong cửa hàng
+Chức năng chính:
+Quay video trong thời gian thực tại cửa hàng:
+
+Hệ thống sẽ ghi lại video của khu vực cửa hàng để giám sát và phân tích số lượng khách hàng có mặt tại mọi thời điểm.
+
+Đếm tổng số người có mặt trong cửa hàng:
+
+Sử dụng các thuật toán nhận diện khuôn mặt và công nghệ DeepFace để đếm chính xác số lượng khách hàng đang có mặt trong cửa hàng.
+
 Phân tích nhân khẩu học:
 
-Xác định độ tuổi của từng khách hàng
-Xác định giới tính của từng khách hàng
+Xác định độ tuổi của từng khách hàng:
 
+Hệ thống sẽ phân tích khuôn mặt khách hàng để xác định độ tuổi chính xác, phân chia khách hàng theo nhóm độ tuổi.
 
+Xác định giới tính của từng khách hàng:
 
-Mục đích ứng dụng
+Dựa trên các đặc điểm khuôn mặt, hệ thống sẽ phân tích và phân loại khách hàng theo giới tính.
+
+Mục đích ứng dụng:
+Giúp cửa hàng tối ưu sự kiện:
+
+Cửa hàng có thể tổ chức sự kiện nhắm đến một độ tuổi cụ thể, như sự kiện dành cho nhóm khách hàng trẻ tuổi.
+
+Hệ thống sẽ đếm số lượng khách hàng thuộc nhóm độ tuổi mục tiêu tham gia sự kiện và phân tích xem sự kiện có thu hút đúng đối tượng khách hàng hay không.
 
 Tối ưu hóa phân bổ nhân viên:
 
-Khi nhiều khách hàng trẻ → phân công nhiều nhân viên trẻ phục vụ
-Khi nhiều khách hàng lớn tuổi → phân công nhân viên chuyên nghiệp, có kinh nghiệm
+Khi có nhiều khách hàng trẻ: Phân công các nhân viên trẻ, năng động để phục vụ, tạo ra sự kết nối tốt hơn với nhóm khách hàng này.
 
+Khi có nhiều khách hàng lớn tuổi: Phân công nhân viên chuyên nghiệp, có kinh nghiệm để tạo sự thoải mái và niềm tin cho nhóm khách hàng cao tuổi.
 
 Quản lý vận hành hiệu quả:
 
-Điều chỉnh số lượng nhân viên theo lưu lượng khách
+Điều chỉnh số lượng nhân viên: Dựa trên lưu lượng khách hàng, cửa hàng có thể điều chỉnh số lượng nhân viên phục vụ phù hợp, giúp tối ưu hóa chi phí và đảm bảo trải nghiệm khách hàng tốt nhất.
+
+Hệ thống này không chỉ giúp cửa hàng phân tích dữ liệu khách hàng mà còn hỗ trợ đưa ra quyết định chiến lược trong các hoạt động kinh doanh, từ việc tối ưu nhân sự đến cải thiện hiệu quả sự kiện và quản lý cửa hàng.
 
 
-=> Làm việc trong folder Hệ thống đếm và phân loại khách hàng trong cửa hàng sử dụng Deepface
+
+
+
+
+

@@ -2,6 +2,8 @@
 
 Một hệ thống sử dụng trí tuệ nhân tạo để đếm và phân loại khách hàng theo độ tuổi và giới tính, giúp tối ưu hóa việc phân bổ nhân viên và quản lý vận hành cửa hàng hiệu quả.
 
+![Minh họa hệ thống](https://via.placeholder.com/800x400?text=Customer+Counting+and+Classification+System)
+
 ## Chức Năng Chính
 
 - **Quay Video Thời Gian Thực**: Theo dõi khách hàng trong cửa hàng
@@ -20,13 +22,45 @@ Một hệ thống sử dụng trí tuệ nhân tạo để đếm và phân lo�
 - **Quản Lý Vận Hành Hiệu Quả**:
   - Điều chỉnh số lượng nhân viên theo lưu lượng khách
 
+## Kiến Trúc Hệ Thống
+
+```
+┌─────────────┐           ┌───────────────┐         ┌─────────────────┐
+│             │           │               │         │                 │
+│  Web Camera │──────────▶│  Flask Server │────────▶│  Frontend UI    │
+│             │           │  (DeepFace)   │         │  (HTML/JS/CSS)  │
+└─────────────┘           └───────┬───────┘         └─────────────────┘
+                                  │
+                                  ▼
+                          ┌───────────────┐
+                          │  SQLite       │
+                          │  Database     │
+                          └───────────────┘
+```
+
+- **Frontend**: HTML, CSS, JavaScript với Bootstrap
+- **Backend**: Python, Flask, OpenCV
+- **AI Engine**: DeepFace (phân tích khuôn mặt, độ tuổi, giới tính)
+- **Database**: SQLite (lưu trữ dữ liệu phân tích)
+
 ## Cài Đặt và Chạy Ứng Dụng
 
-### Yêu Cầu Hệ Thống
+### Sử Dụng Docker (Khuyến nghị)
 
-- Python 3.8+
-- Webcam hoặc camera IP
-- Trình duyệt web hiện đại
+1. Cài đặt Docker và Docker Compose trên máy của bạn
+
+2. Clone repo về máy:
+   ```
+   git clone <repository-url>
+   cd "Hệ thống đếm và phân loại khách hàng trong cửa hàng"
+   ```
+
+3. Khởi động ứng dụng bằng Docker Compose:
+   ```
+   docker-compose up -d
+   ```
+
+4. Truy cập ứng dụng tại: `http://localhost:8080`
 
 ### Cài Đặt Thủ Công
 
@@ -65,7 +99,48 @@ Một hệ thống sử dụng trí tuệ nhân tạo để đếm và phân lo�
 
 **Lưu ý**: Bạn phải đảm bảo Flask backend đang chạy trước khi mở frontend, nếu không video feed sẽ không hiển thị.
 
-### Xử lý sự cố khi hệ thống không đếm được người
+## Chụp Màn Hình Ứng Dụng
+
+### Trang Chính
+![Trang chính](https://via.placeholder.com/800x400?text=Home+Page)
+
+### Bảng Điều Khiển Phân Tích
+![Phân tích](https://via.placeholder.com/800x400?text=Analytics+Dashboard)
+
+### Quản Lý Nhân Viên
+![Quản lý nhân viên](https://via.placeholder.com/800x400?text=Staff+Management)
+
+## Các Công Nghệ Sử Dụng
+
+- **Frontend**:
+  - HTML5, CSS3, JavaScript
+  - Bootstrap 5
+  - Chart.js (hiển thị biểu đồ)
+  - Fetch API (giao tiếp với backend)
+
+- **Backend**:
+  - Python 3.8+
+  - Flask (web framework)
+  - Flask-CORS (cho phép cross-origin requests)
+  - OpenCV (xử lý hình ảnh)
+  - DeepFace (phân tích khuôn mặt, tuổi, giới tính)
+
+- **Database**:
+  - SQLite (lưu trữ dữ liệu phân tích)
+
+- **DevOps**:
+  - Docker (containerization)
+  - Docker Compose (điều phối container)
+
+## API Endpoints
+
+- `GET /video_feed` - Stream video từ camera
+- `GET /latest_analysis` - Lấy kết quả phân tích mới nhất
+- `GET /historical_data` - Lấy dữ liệu lịch sử phân tích
+- `POST /analyze` - Phân tích ảnh được upload
+- `GET /camera_status` - Kiểm tra trạng thái camera
+
+## Xử lý sự cố khi hệ thống không đếm được người
 
 Nếu hệ thống không đếm được khách hàng mặc dù bạn đang ở phía trước camera, hãy thử các cách sau:
 
@@ -101,43 +176,32 @@ Nếu hệ thống không đếm được khách hàng mặc dù bạn đang ở
    - Khởi động lại máy tính (trong một số trường hợp)
    - Khởi động lại quy trình từ đầu
 
-### Xử lý sự cố khác
+## Docker Hub
 
-- Đảm bảo rằng thư mục deepface đã được clone vào cùng thư mục cha với dự án này (Cuối kì)
-- Nếu không tìm thấy deepface, hãy kiểm tra đường dẫn trong file `backend/setup_deepface.py`
-- Nếu video không hiển thị, hãy kiểm tra Console của trình duyệt (F12) để xem lỗi
-- Đảm bảo webcam của bạn không bị chặn hoặc đang được sử dụng bởi ứng dụng khác
-- Một số trình duyệt yêu cầu HTTPS để truy cập webcam - trong môi trường phát triển, bạn nên dùng Chrome hoặc Edge
+Dự án này cũng được đóng gói và đẩy lên Docker Hub để dễ dàng triển khai:
 
-### Sử Dụng Docker (Coming Soon)
+- **Frontend Image**: `[username]/customer-counter-frontend:latest`
+- **Backend Image**: `[username]/customer-counter-backend:latest`
 
-Hướng dẫn sử dụng Docker sẽ được cập nhật sau.
-
-## Cấu Trúc Dự Án
-
+Bạn có thể kéo và chạy các image này bằng lệnh:
 ```
-Hệ thống đếm và phân loại khách hàng trong cửa hàng/
-├── backend/                 # Backend API và xử lý AI
-│   ├── app.py               # Ứng dụng Flask chính
-│   ├── database.py          # Xử lý cơ sở dữ liệu
-│   └── requirements.txt     # Các gói phụ thuộc
-├── frontend/                # Giao diện người dùng
-│   ├── index.html           # Trang chính
-│   ├── admin.html           # Trang quản trị
-│   ├── styles.css           # CSS cho giao diện
-│   ├── script.js            # JavaScript cho trang chính
-│   └── admin.js             # JavaScript cho trang quản trị
-└── README.md                # Tài liệu dự án
+docker pull [username]/customer-counter-frontend:latest
+docker pull [username]/customer-counter-backend:latest
 ```
 
-## Công Nghệ Sử Dụng
-
-- **Backend**: Flask, DeepFace, OpenCV, SQLite
-- **Frontend**: HTML5, CSS3, JavaScript, Bootstrap, Chart.js
+Hoặc đơn giản hơn, sử dụng file docker-compose.yml đã cung cấp.
 
 ## Đóng Góp
 
 Các đóng góp cho dự án được chào đón! Vui lòng tạo issue hoặc pull request với các cải tiến.
+
+## Nhóm Phát Triển
+
+- Thành viên 1 (Trưởng nhóm)
+- Thành viên 2
+- Thành viên 3
+- Thành viên 4
+- Thành viên 5
 
 ## Giấy Phép
 

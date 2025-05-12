@@ -12,6 +12,9 @@ from datetime import datetime
 import os
 import base64
 from database import Database
+import jwt
+from functools import wraps
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -42,6 +45,9 @@ current_detector_index = 0  # Bắt đầu với opencv
 failed_detections = 0  # Đếm số lần không phát hiện được khuôn mặt
 max_failed_detections = 30  # Số lần tối đa trước khi chuyển detector
 
+app.config['SECRET_KEY'] = 'your-secret-key-change-this'  # Change this in production!
+app.config['JWT_EXPIRATION_DELTA'] = 24 * 60 * 60  # 24 hours in seconds
+
 def get_age_group(age):
     if age <= 20:
         return "young"
@@ -51,6 +57,30 @@ def get_age_group(age):
         return "middle_aged"
     else:
         return "elderly"
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        
+        # Get token from Authorization header
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+        
+        if not token:
+            return jsonify({'message': 'Token is missing!'}), 401
+        
+        try:
+            # Decode token
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+            current_user = data['user_id']
+        except:
+            return jsonify({'message': 'Token is invalid!'}), 401
+            
+        return f(current_user, *args, **kwargs)
+    
+    return decorated
 
 def process_frame(frame):
     global latest_analysis, processing_frame, current_detector_index, failed_detections
@@ -244,6 +274,86 @@ def get_latest_analysis():
 def get_historical_data():
     data = db.get_historical_data()
     return jsonify(data)
+
+@app.route('/auth/login', methods=['POST'])
+def login():
+    data = request.json
+    
+    if not data or not data.get('username') or not data.get('password'):
+        return jsonify({'message': 'Username and password are required!'}), 400
+    
+    user, message = db.authenticate_user(data['username'], data['password'])
+    
+    if not user:
+        return jsonify({'message': message}), 401
+    
+    # Generate JWT token
+    token_payload = {
+        'user_id': user['id'],
+        'username': user['username'],
+        'exp': datetime.utcnow() + timedelta(seconds=app.config['JWT_EXPIRATION_DELTA'])
+    }
+    token = jwt.encode(token_payload, app.config['SECRET_KEY'], algorithm="HS256")
+    
+    return jsonify({
+        'token': token,
+        'user': user,
+        'message': 'Login successful'
+    })
+
+@app.route('/auth/register', methods=['POST'])
+def register():
+    data = request.json
+    
+    # Basic validation
+    required_fields = ['username', 'password', 'full_name', 'email', 'position', 'secret_code']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({'message': f'Field {field} is required!'}), 400
+    
+    # Verify secret code (simple implementation)
+    if data['secret_code'] != 'ADMIN123':  # You would use a more secure approach in production
+        return jsonify({'message': 'Invalid secret code!'}), 403
+    
+    # Create user
+    success, message = db.create_user(
+        data['username'], 
+        data['password'],
+        data['full_name'],
+        data['email'],
+        data['position']
+    )
+    
+    if not success:
+        return jsonify({'message': message}), 400
+    
+    return jsonify({'message': 'User registered successfully'})
+
+@app.route('/auth/change-password', methods=['POST'])
+@token_required
+def change_password(current_user):
+    data = request.json
+    
+    if not data or not data.get('current_password') or not data.get('new_password'):
+        return jsonify({'message': 'Current and new passwords are required!'}), 400
+    
+    success, message = db.change_password(
+        current_user,
+        data['current_password'],
+        data['new_password']
+    )
+    
+    if not success:
+        return jsonify({'message': message}), 400
+    
+    return jsonify({'message': message})
+
+@app.route('/auth/users', methods=['GET'])
+@token_required
+def get_users(current_user):
+    # You might want to check if the current user has admin privileges
+    users = db.get_all_users()
+    return jsonify(users)
 
 @app.route('/')
 def index():
