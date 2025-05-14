@@ -1,0 +1,82 @@
+======================================================================
+HỆ THỐNG ĐẾM VÀ PHÂN LOẠI KHÁCH HÀNG TRONG CỬA HÀNG
+======================================================================
+
+I. TỔNG QUAN
+======================================================================
+- Hệ thống sử dụng camera để nhận diện, đếm và phân loại khách hàng theo độ tuổi và giới tính
+- Phân loại độ tuổi: trẻ (0-20), thanh niên (21-40), trung niên (41-60), cao tuổi (60+)
+- Phân loại giới tính: nam và nữ
+
+II. TÍNH NĂNG CHÍNH
+======================================================================
+
+1. ĐẾM VÀ PHÂN LOẠI KHÁCH HÀNG ĐỂ PHÂN BỔ NHÂN VIÊN
+----------------------------------------------------------------------
+- Hệ thống phân tích cơ cấu khách hàng để tối ưu hóa phân bổ nhân viên:
+
+  A. Phân bổ theo độ tuổi:
+     * Ví dụ: Phát hiện 60% khách hàng trong độ tuổi 0-20
+     * Hệ thống đề xuất: Tăng cường nhân viên trẻ (20-35 tuổi)
+     * Lý do: Nhân viên trẻ dễ đồng cảm và tương tác tốt với khách hàng trẻ
+     
+     * Ví dụ: Phát hiện 50% khách hàng trên 60 tuổi
+     * Hệ thống đề xuất: Tăng cường nhân viên trung niên
+     * Lý do: Nhân viên có kinh nghiệm phục vụ tốt hơn cho khách hàng cao tuổi
+
+  B. Phân bổ theo giới tính:
+     * Ví dụ: Phát hiện 70% khách hàng là nam
+     * Hệ thống đề xuất: Cân đối nhân viên nam chiếm tỷ lệ cao hơn
+     * Lý do: Tạo sự thoải mái và đồng điệu cho khách hàng
+     
+     * Ví dụ: Phát hiện 75% khách hàng là nữ
+     * Hệ thống đề xuất: Tăng cường nhân viên nữ phục vụ
+     * Lý do: Phụ nữ thường thoải mái hơn khi được nhân viên nữ tư vấn
+
+  C. Cập nhật liên tục:
+     * Hệ thống theo dõi sự thay đổi cơ cấu khách hàng theo giờ
+     * Khi phát hiện thay đổi >20% trong cơ cấu khách hàng, tự động cập nhật đề xuất
+     * Thông báo cho quản lý để điều chỉnh ca làm việc và phân công nhân viên
+
+2. PHÂN TÍCH HIỆU QUẢ SỰ KIỆN
+----------------------------------------------------------------------
+- Hệ thống đánh giá hiệu quả sự kiện dựa trên đối tượng mục tiêu:
+
+  A. Sự kiện theo độ tuổi:
+     * Ví dụ: Sự kiện dành cho trẻ em (0-20 tuổi)
+     * Hệ thống đếm tỷ lệ khách hàng trong độ tuổi 0-20 so với tổng số
+     * Đánh giá: Nếu >85% khách hàng là trẻ em → Rất thành công
+
+  B. Sự kiện theo giới tính:
+     * Ví dụ: Sự kiện dành cho phụ nữ
+     * Hệ thống đếm tỷ lệ khách nữ so với tổng số
+     * Đánh giá: Nếu >70% khách hàng là nữ → Thành công
+
+  C. Mức độ thành công:
+     * Rất thành công: >85% đúng đối tượng mục tiêu
+     * Thành công: 70-85% đúng đối tượng
+     * Trung bình: 50-70% đúng đối tượng
+     * Chưa thành công: <50% đúng đối tượng
+
+  D. Báo cáo sau sự kiện:
+     * Tổng hợp số liệu thực tế
+     * Đề xuất điều chỉnh cho sự kiện tương tự trong tương lai
+
+III. LUỒNG HOẠT ĐỘNG HỆ THỐNG
+======================================================================
+1. Thu thập dữ liệu:
+   - Camera → Nhận diện → Đếm số người, Phân tích đặc điểm (độ tuổi, giới tính) → Phân loại
+
+2. Phân bổ nhân viên:
+   - Phân tích cơ cấu khách hàng → So sánh với tình hình nhân viên → Tạo khuyến nghị
+
+3. Đánh giá sự kiện:
+   - Cấu hình sự kiện với đối tượng mục tiêu → Thu thập dữ liệu khách hàng thực tế
+   - So sánh với đối tượng mục tiêu → Đánh giá hiệu quả → Tạo báo cáo
+
+IV. YÊU CẦU KỸ THUẬT
+======================================================================
+- Độ chính xác nhận diện giới tính: tối thiểu 85%
+- Độ chính xác phân loại độ tuổi: tối thiểu 75%
+- Xử lý video thời gian thực với độ trễ tối đa 2 giây
+- Hỗ trợ đồng thời tối đa 20 người trong khung hình

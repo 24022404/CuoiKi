@@ -1,0 +1,132 @@
+# BTL
+
+Trình bày một dự án đơn giản cho môn *Thực hành phát triển trí tuệ nhân tạo*. Sinh viên sẽ xây dựng một hệ thống phát hiện sử dụng AI cho nhận diện khuôn mặt hoặc biển số xe, đóng gói trong Docker và đẩy lên Docker Hub. Giáo viên chỉ cần chạy lệnh `docker-compose up -d` để khởi động hệ thống.
+
+Một nhóm sẽ có tối đa 5 thành viên, hãy đăng kí đề tài và thành viên vào [link này](https://docs.google.com/spreadsheets/d/1WtS8KryL2zCSkk5tk3hGZBq-t-Z6IsCJ/edit?gid=978300917#gid=978300917) đến hết 27/4
+
+## Nhiệm Vụ Lựa Chọn
+
+Sinh viên phải chọn ra 1 nhiệm vụ (1 use case) để ứng dụng với hệ thống AI, ví dụ như:
+Chỉ cần tích hợp 1 trong 2 đường link kia vào thôi để biến thành 1 hệ thống vận hành bình thường
+ mà đẩy đủ tính năng, không phải phát triển lại từ đầu nhé
+
+1. **Hệ Thống Nhận Diện Khuôn Mặt Trong thời gian thực:**
+    
+    https://github.com/serengil/deepface
+    
+    - **Trường Hợp 1:** Kiểm soát truy cập công ty (ví dụ: xác minh khuôn mặt nhân viên để vào cửa).
+    - **Trường Hợp 2:** Kiểm soát camera tại khách sạn (ví dụ: xác minh khuôn mặt của khách ra và vào).
+2. **Hệ Thống Nhận Diện Biển Số Xe trong thời gian thực:** 
+    
+    https://github.com/trungdinh22/License-Plate-Recognition
+    
+    - **Trường Hợp 1:** Kiểm tra vi phạm biển số xe hơi (ví dụ: phát hiện biển số và kiểm tra vi phạm giao thông).
+    - **Trường Hợp 2:** Kiểm tra thông tin của chủ xe (ví dụ: phát hiện biển số và kiểm tra thông tin chủ sở hữu).
+
+**Lưu ý**: Use case mỗi nhóm phải khác nhau, nếu chưa hợp lý giáo viên sẽ nhắc phải thay đổi
+
+## Những Gì Cần Thực Hiện
+
+1. **Phát Triển Ứng Dụng:**
+    - Xây dựng hệ thống xử lý hình ảnh trong thời gian thực cho nhận diện khuôn mặt hoặc biển số xe. Cần 4 image sau:
+        - Tạo giao diện người dùng (frontend) để display quá trình xử lý ảnh trong thời gian thực và hiện thị những thứ cần thiết cho use case của các bạn
+        - Tạo Frontend cho admin (vd: thêm người dùng, xóa người dùng, thay đổi quyền, chỉnh sửa database, … )
+        - Tạo backend để lưu trữ dữ liệu (vd: Kafka, Redis Stack, MySQL, NoSQL, Pinecone… )
+        - Tạo backend để xử lý hình ảnh bằng mô hình AI và trả kết quả tương ứng.
+            
+            Ảnh1.PNG)
+            
+    - Kết nối API
+2. **Đóng Gói Trong Docker:**
+    - Sử dụng Docker Compose để quản lý frontend và backend.
+3. **Đẩy Lên Docker Hub:**
+    - Đẩy hình ảnh Docker lên Docker Hub.
+    - Cung cấp tệp `docker-compose.yml` cho giáo viên.
+
+## Cách Thực Hiện
+
+- Xây dựng và chạy container Docker:
+    
+    ```bash
+    docker-compose up --build
+    
+    ```
+    
+- Truy cập ứng dụng (ví dụ: tại `http://localhost`).
+- Kiểm tra bằng cách tải lên hình ảnh để xác nhận mô hình AI hoạt động (ví dụ: phát hiện khuôn mặt hoặc biển số).
+- Đảm bảo giáo viên có thể chạy hệ thống với `docker-compose up -d`.
+
+### Đẩy Lên Docker Hub
+
+- Xây dựng và gắn thẻ hình ảnh Docker:
+    - Với frontend và backend tách biệt: Gắn thẻ mỗi hình ảnh (ví dụ: `yourusername/client` và `yourusername/server`).
+    - Với ứng dụng kết hợp: Gắn thẻ hình ảnh duy nhất (ví dụ: `yourusername/detection-app`).
+- Đẩy lên Docker Hub:
+    
+    ```bash
+    docker login
+    docker push yourusername/image-name
+    
+    ```
+    
+- Cung cấp cho giáo viên trong github của các bạn:
+    - Liên kết kho Docker Hub.
+    - Tệp `docker-compose.yml`.
+    - Tệp README với hướng dẫn.
+
+## Cách Giáo Viên Chạy Hệ Thống
+
+1. Down image từ Docker Hub:
+    
+    ```bash
+    docker pull yourusername/image-name
+    
+    ```
+    
+2. Lưu tệp `docker-compose.yml` được cung cấp.
+3. Chạy hệ thống:
+    
+    ```bash
+    docker-compose up -d
+    ```
+    
+4. Truy cập ứng dụng tại `http://localhost`.
+
+## Thang Điểm Đánh Giá (1-10)
+
+Dự án sẽ được chấm trên thang điểm từ 1 đến 10, dựa trên các tiêu chí sau:
+
+| **Tiêu Chí** | **Mô Tả** | **Điểm Tối Đa** |
+| --- | --- | --- |
+| **Chức Năng (4 điểm)** | Hệ thống thực hiện đúng nhiệm vụ đã chọn (nhận diện khuôn mặt hoặc biển số xe) và trả về kết quả chính xác. 
+- 4: Hoạt động hoàn hảo, xử lý nhiều trường hợp. 
+- 3: Hoạt động tốt nhưng có lỗi nhỏ. 
+- 2: Hoạt động nhưng nhiều lỗi. 
+- 1: Chạy nhưng không đạt yêu cầu. 
+- 0: Không hoạt động. | 4 |
+| **Triển Khai Docker (3 điểm)** | Hệ thống được đóng gói trong Docker và chạy bằng docker-compose up -d. 
+- 3: Chạy mượt mà, không cần chỉnh sửa. 
+- 2: Chạy nhưng cần cấu hình bổ sung. 
+- 1: Có lỗi khi chạy Docker. 
+- 0: Không chạy được. | 3 |
+| **Tài Liệu (2 điểm)** | README rõ ràng, bao gồm mô tả dự án, liên kết Docker Hub, và hướng dẫn chạy. 
+- 2: Rõ ràng, đầy đủ thông tin. 
+- 1: Thiếu một số thông tin quan trọng. 
+- 0: Không có tài liệu. | 2 |
+| **Giao Diện Người Dùng (1 điểm)** | Giao diện frontend đơn giản, dễ sử dụng. 
+- 1: Giao diện rõ ràng, thân thiện. 
+- 0.5: Giao diện cơ bản nhưng khó dùng. 
+- 0: Không có giao diện. | 1 |
+
+**Tổng Điểm:** 10
+
+## Ghi Chú
+
+- **Chọn Một Nhiệm Vụ:** Tập trung vào nhận diện khuôn mặt hoặc biển số xe để dự án dễ quản lý.
+- **Mô Hình AI:** Đảm bảo bao gồm tệp mô hình cho nhận diện khuôn mặt hoặc nhận diện biển số trong hình ảnh Docker.
+- **Kiểm Tra:** Thử nghiệm để xác minh độ tin cậy của hệ thống.
+- **Tài Liệu:** Bao gồm tệp README với:
+    - Tên thành viên
+    - Mô tả dự án (nhiệm vụ và trường hợp sử dụng được chọn).
+    - Liên kết Docker Hub.
+    - Hướng dẫn chạy `docker-compose up -d`.
