@@ -53,12 +53,7 @@
     <div class="container mt-4" id="adminContent" style="display: none;">
         <ul class="nav nav-tabs" id="adminTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button" role="tab">
-                    <i class="bi bi-graph-up me-2"></i>Phân Tích
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="events-tab" data-bs-toggle="tab" data-bs-target="#events" type="button" role="tab">
+                <button class="nav-link active" id="events-tab" data-bs-toggle="tab" data-bs-target="#events" type="button" role="tab">
                     <i class="bi bi-calendar-event me-2"></i>Sự Kiện
                 </button>
             </li>
@@ -75,80 +70,8 @@
         </ul>
         
         <div class="tab-content p-4 bg-white shadow-sm" id="adminTabContent">
-            <!-- Analytics Tab -->
-            <div class="tab-pane fade show active" id="analytics" role="tabpanel">
-                <h3 class="mb-4">Phân Tích Khách Hàng</h3>
-                
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="mb-0">Xu Hướng Khách Hàng</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="btn-group mb-3" role="group">
-                                    <button type="button" class="btn btn-outline-primary" onclick="updateChart('day')">Hôm Nay</button>
-                                    <button type="button" class="btn btn-outline-primary active" onclick="updateChart('week')">Tuần Này</button>
-                                    <button type="button" class="btn btn-outline-primary" onclick="updateChart('month')">Tháng Này</button>
-                                </div>
-                                <canvas id="customerTrendsChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="mb-0">Phân Bố Đối Tượng</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <canvas id="genderPieChart"></canvas>
-                                        <p class="text-center mt-2">Phân bố giới tính</p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <canvas id="agePieChart"></canvas>
-                                        <p class="text-center mt-2">Phân bố độ tuổi</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Dữ Liệu Chi Tiết</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Thời Gian</th>
-                                        <th>Tổng Khách</th>
-                                        <th>Nam</th>
-                                        <th>Nữ</th>
-                                        <th>Trẻ</th>
-                                        <th>Thanh Niên</th>
-                                        <th>Trung Niên</th>
-                                        <th>Cao Tuổi</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="analyticsTableBody">
-                                    <tr>
-                                        <td colspan="8" class="text-center">Đang tải dữ liệu...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
             <!-- Events Tab -->
-            <div class="tab-pane fade" id="events" role="tabpanel">
+            <div class="tab-pane fade show active" id="events" role="tabpanel">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3>Quản Lý Sự Kiện</h3>
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEventModal">
@@ -223,86 +146,7 @@
                     </div>
                 </div>
                 
-                <!-- Event Analytics -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Phân Tích Hiệu Quả Sự Kiện</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="card mb-3">
-                                    <div class="card-header">Khách Hàng Theo Độ Tuổi</div>
-                                    <div class="card-body">
-                                        <canvas id="eventAgeChart" height="200"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card mb-3">
-                                    <div class="card-header">Tỷ Lệ Đúng Đối Tượng</div>
-                                    <div class="card-body">
-                                        <canvas id="eventTargetChart" height="200"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card mt-3">
-                            <div class="card-header">
-                                Phát Hiện Khách Hàng Thời Gian Thực
-                            </div>
-                            <div class="card-body">
-                                <div class="real-time-event-container">
-                                    <div class="row">
-                                        <div class="col-md-4">
-                                            <div class="event-live-stats">
-                                                <h3 id="eventName">Khuyến mãi cho người trẻ</h3>
-                                                <div class="counter-card event-card">
-                                                    <div class="counter-icon">
-                                                        <i class="bi bi-people-fill"></i>
-                                                    </div>
-                                                    <div class="counter-details">
-                                                        <h3 id="liveEventCount">45</h3>
-                                                        <p>Khách hàng hiện tại</p>
-                                                    </div>
-                                                </div>
-                                                <div class="mt-3">
-                                                    <h6>Thống kê nhóm khách hàng mục tiêu</h6>
-                                                    <div class="progress mb-2" style="height: 25px;">
-                                                        <div id="eventTargetProgress" class="progress-bar bg-success" role="progressbar" style="width: 87%;">
-                                                            87% đúng mục tiêu
-                                                        </div>
-                                                    </div>
-                                                    <div class="d-flex justify-content-between">
-                                                        <small>Đúng mục tiêu: <span id="onTargetCount">39</span></small>
-                                                        <small>Ngoài mục tiêu: <span id="offTargetCount">6</span></small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-8">
-                                            <div class="event-effectiveness-box">
-                                                <h6>Đánh Giá Hiệu Quả Sự Kiện</h6>
-                                                <div class="alert alert-success">
-                                                    <strong>Sự kiện đang đạt hiệu quả tốt!</strong>
-                                                    <p>87% khách hàng thuộc nhóm độ tuổi mục tiêu (Trẻ 0-20). Sự kiện đang thu hút đúng đối tượng khách hàng.</p>
-                                                </div>
-                                                <div class="recommendations-list">
-                                                    <h6>Khuyến nghị:</h6>
-                                                    <ol>
-                                                        <li>Tiếp tục truyền thông trên các kênh phổ biến với giới trẻ</li>
-                                                        <li>Tăng cường nhân viên trẻ tuổi để tương tác với khách hàng</li>
-                                                        <li>Theo dõi lượng khách sau 17:00 khi học sinh tan trường</li>
-                                                    </ol>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <!-- Past Events (keep this section) -->
                 
                 <!-- Past Events -->
                 <div class="card">
@@ -389,17 +233,6 @@
                                     </tr>
                                 </tbody>
                             </table>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Khuyến Nghị Phân Bổ Nhân Viên</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="staffRecommendations" class="recommendation-box">
-                            <p>Đang phân tích để đưa ra khuyến nghị...</p>
                         </div>
                     </div>
                 </div>

@@ -375,30 +375,10 @@ function formatExperienceLevel(level) {
 function generateStaffRecommendations(staffData) {
     const recommendationsBox = document.getElementById('staffRecommendations');
     
-    // Tính toán dựa trên dữ liệu thực từ API
-    // Dưới đây là một ví dụ đơn giản
-    const totalStaff = staffData.length;
-    const juniorStaff = staffData.filter(s => s.experience_level === 'junior').length;
-    const seniorStaff = staffData.filter(s => s.experience_level === 'senior').length;
-    const maleStaff = staffData.filter(s => s.gender === 'male').length;
-    const femaleStaff = staffData.filter(s => s.gender === 'female').length;
-    
+    // Simplified placeholder message
     let recommendations = '<h5>Khuyến nghị phân bổ nhân viên:</h5><ul>';
-    
-    if (juniorStaff / totalStaff > 0.7) {
-        recommendations += '<li>Cửa hàng có quá nhiều nhân viên mới, cần tuyển thêm nhân viên có kinh nghiệm.</li>';
-    }
-    
-    if (seniorStaff / totalStaff < 0.2) {
-        recommendations += '<li>Cửa hàng có ít nhân viên cao cấp, cần cân nhắc tuyển thêm hoặc đào tạo nâng cao.</li>';
-    }
-    
-    if (Math.abs(maleStaff - femaleStaff) / totalStaff > 0.4) {
-        const lessGender = maleStaff < femaleStaff ? 'nam' : 'nữ';
-        recommendations += `<li>Sự chênh lệch giới tính lớn, cần cân nhắc tuyển thêm nhân viên ${lessGender}.</li>`;
-    }
-    
-    recommendations += '<li>Phân công nhân viên trẻ phục vụ khách hàng trẻ, nhân viên lớn tuổi hỗ trợ khách hàng cao tuổi.</li>';
+    recommendations += '<li>Đã chuyển tính năng phân tích chi tiết sang giao diện người dùng.</li>';
+    recommendations += '<li>Vui lòng truy cập trang chính để xem khuyến nghị chi tiết.</li>';
     recommendations += '</ul>';
     
     recommendationsBox.innerHTML = recommendations;

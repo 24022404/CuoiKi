@@ -42,5 +42,8 @@ Hệ thống này không chỉ giúp cửa hàng phân tích dữ liệu khách 
 
 
 
-
+        - Tạo giao diện người dùng (frontend) để display quá trình xử lý ảnh trong thời gian thực và hiện thị những thứ cần thiết cho use case của các bạn
+        - Tạo Frontend cho admin (vd: thêm người dùng, xóa người dùng, thay đổi quyền, chỉnh sửa database, … )
+        - Tạo backend để lưu trữ dữ liệu (vd: Kafka, Redis Stack, MySQL, NoSQL, Pinecone… )
+        - Tạo backend để xử lý hình ảnh bằng mô hình AI và trả kết quả tương ứng.
 

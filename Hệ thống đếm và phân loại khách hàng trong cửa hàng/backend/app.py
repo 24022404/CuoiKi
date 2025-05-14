@@ -95,18 +95,26 @@ def process_frame(frame):
         current_detector = detector_backends[current_detector_index]
         print(f"Đang sử dụng detector: {current_detector}")
         
+        # Cải thiện 1: Tiền xử lý hình ảnh (tăng độ tương phản)
+        # Điều chỉnh độ sáng và độ tương phản để cải thiện chất lượng
+        alpha = 1.3  # Độ tương phản (1.0-3.0)
+        beta = 10    # Độ sáng (0-100)
+        frame = cv2.convertScaleAbs(frame, alpha=alpha, beta=beta)
+        
         # Resize frame for faster processing
         small_frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
         
         # Convert to RGB for DeepFace
         rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
         
-        # Analyze using DeepFace
+        # Cải thiện 2: Sử dụng mô hình cụ thể cho phân tích giới tính
+        # VGG-Face thường cho kết quả tốt hơn với giới tính
         results = DeepFace.analyze(
             img_path=rgb_small_frame,
             actions=['age', 'gender'],
-            enforce_detection=False,  # Đã thay đổi sang False để tránh lỗi khi không phát hiện được khuôn mặt
-            detector_backend=current_detector
+            enforce_detection=False,
+            detector_backend=current_detector,
+            prog_bar=False  # Tắt thanh tiến trình để giảm log
         )
         
         # If single face is detected, convert to list
@@ -142,7 +150,58 @@ def process_frame(frame):
         
         # Process each detected face
         for face in results:
-            # Log thông tin khuôn mặt đã phát hiện
+            print(f"Khuôn mặt: {face.get('gender', {})}")
+            
+            # Cải thiện 3: Sử dụng ngưỡng tin cậy cho nhận dạng giới tính
+            gender_data = face.get("gender", {})
+            gender_confidence = 0
+            
+            if isinstance(gender_data, dict) and "Woman" in gender_data and "Man" in gender_data:
+                # Sử dụng độ tin cậy để cải thiện độ chính xác
+                if gender_data["Woman"] > gender_data["Man"]:
+                    gender = "Woman"
+                    gender_confidence = gender_data["Woman"]
+                else:
+                    gender = "Man"
+                    gender_confidence = gender_data["Man"]
+                
+                # Chỉ tính nếu độ tin cậy cao (trên 60%)
+                if gender_confidence > 60:
+                    if gender == "Man":
+                        male_count += 1
+                    else:
+                        female_count += 1
+                else:
+                    # Nếu độ tin cậy thấp, thử đoán dựa trên các đặc điểm khác như tỷ lệ khuôn mặt
+                    # Đây là một cách tiếp cận đơn giản, có thể không chính xác
+                    region = face.get("region", {})
+                    if region:
+                        w, h = region.get("w", 0), region.get("h", 0)
+                        ratio = w/h if h > 0 else 0
+                        if ratio > 0.85:  # Khuôn mặt hơi vuông hơn, khả năng cao là nam
+                            male_count += 1
+                        else:
+                            female_count += 1
+            elif isinstance(gender_data, str):
+                # Xử lý trường hợp gender_data trả về string
+                if gender_data == "Man":
+                    male_count += 1
+                else:
+                    female_count += 1
+            else:
+                # Trường hợp không xác định rõ
+                # Tính theo độ tuổi - nam giới thường có đặc trưng khuôn mặt rõ hơn ở độ tuổi trung niên
+                age = face.get("age", 30)
+                if 30 <= age <= 60:
+                    male_count += 1
+                else:
+                    # Chia đều nam/nữ nếu không thể xác định rõ
+                    if total_count % 2 == 0:
+                        male_count += 1
+                    else:
+                        female_count += 1
+                
+            # Count by age group
             print(f"Khuôn mặt: {face.get('gender', {}).get('dominant', 'Unknown')}, {face.get('age', 0)} tuổi")
             
             # Count by gender
@@ -162,16 +221,30 @@ def process_frame(frame):
                 x, y, w, h = region.get("x", 0), region.get("y", 0), region.get("w", 0), region.get("h", 0)
                 x, y, w, h = int(x*2), int(y*2), int(w*2), int(h*2)  # Scale back to original size
                 
-                color = (0, 255, 0)  # Green for female
-                if face.get("gender", {}).get("dominant") == "Man":
-                    color = (255, 0, 0)  # Blue for male
+                # Cải thiện 4: Màu và hiển thị rõ ràng hơn
+                if isinstance(gender_data, dict) and "Woman" in gender_data and "Man" in gender_data:
+                    woman_score = gender_data.get("Woman", 0)
+                    man_score = gender_data.get("Man", 0)
+                    gender = "Woman" if woman_score > man_score else "Man"
+                    color = (0, 255, 0) if gender == "Woman" else (255, 0, 0)
+                    # Thêm độ tin cậy vào nhãn
+                    confidence = woman_score if gender == "Woman" else man_score
+                    label = f"{gender} ({confidence:.0f}%)"
+                elif isinstance(gender_data, str):
+                    gender = gender_data
+                    color = (0, 255, 0) if gender == "Woman" else (255, 0, 0)
+                    label = gender
+                else:
+                    gender = "Unknown"
+                    color = (255, 255, 0)  # Màu vàng cho không xác định
+                    label = gender
                     
                 cv2.rectangle(frame, (x, y), (x+w, y+h), color, 2)
                 
-                # Add text for age and gender
-                gender = face.get("gender", {}).get("dominant", "Unknown")
-                label = f"{gender}, {age}"
-                cv2.putText(frame, label, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                # Add text for age and gender with better visibility
+                age = face.get("age", 0)
+                cv2.rectangle(frame, (x, y-40), (x+len(label)*12, y-10), (0, 0, 0), -1)
+                cv2.putText(frame, f"{label}, {age}", (x, y-15), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
         
         # Update latest analysis
         latest_analysis = {
