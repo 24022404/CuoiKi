@@ -65,6 +65,23 @@ class Database:
         )
         ''')
         
+                # START: Thêm bảng Lịch Sử Hoạt Động (activity_logs)
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS activity_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT NOT NULL,
+            user_id INTEGER,
+            username TEXT,
+            action_type TEXT NOT NULL,
+            object_type TEXT,
+            object_id INTEGER,
+            details TEXT,
+            ip_address TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+        ''')
+        # END: Thêm bảng Lịch Sử Hoạt Động
+        
         # Check if admin user exists, create if not
         cursor.execute("SELECT * FROM users WHERE username = 'admin'")
         if not cursor.fetchone():
