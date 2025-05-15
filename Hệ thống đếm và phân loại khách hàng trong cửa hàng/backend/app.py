@@ -463,6 +463,63 @@ def init_camera():
 # Initialize camera when app starts
 init_camera()
 
+@app.route('/staff', methods=['GET'])
+@token_required
+def get_all_staff_api(current_user): # Thêm current_user nếu dùng token_required
+    try:
+        staff_list = db.get_all_staff()
+        return jsonify(staff_list), 200
+    except Exception as e:
+        return jsonify({'message': 'Lỗi khi lấy danh sách nhân viên', 'error': str(e)}), 500
+
+@app.route('/staff', methods=['POST'])
+@token_required
+def add_staff_api(current_user):
+    data = request.json
+    if not data or not data.get('name') or not data.get('age') or not data.get('gender') or not data.get('experience_level'):
+        return jsonify({'message': 'Thiếu thông tin nhân viên'}), 400
+    try:
+        # db.add_staff trả về None, nên chúng ta cần lấy lại staff vừa tạo hoặc trả về thông báo
+        db.add_staff(data['name'], data['age'], data['gender'], data['experience_level'])
+        # Để đơn giản, chỉ trả về success message. Tốt hơn là trả về object staff vừa tạo.
+        # Ghi log hoạt động ở đây
+        user_info = db.get_user_by_id(current_user) # Bạn cần thêm hàm này vào database.py
+        if user_info:
+            db.add_activity_log(user_id=current_user, username=user_info.get('username'), action_type='CREATE_STAFF', details=f"Thêm nhân viên: {data['name']}", ip_address=request.remote_addr)
+        return jsonify({'message': 'Thêm nhân viên thành công'}), 201
+    except Exception as e:
+        return jsonify({'message': 'Lỗi khi thêm nhân viên', 'error': str(e)}), 500
+
+@app.route('/staff/<int:staff_id>', methods=['DELETE'])
+@token_required
+def delete_staff_api(current_user, staff_id):
+    try:
+        # Kiểm tra xem nhân viên có tồn tại không trước khi xóa (tùy chọn)
+        db.delete_staff(staff_id)
+        # Ghi log hoạt động ở đây
+        user_info = db.get_user_by_id(current_user)
+        if user_info:
+            db.add_activity_log(user_id=current_user, username=user_info.get('username'), action_type='DELETE_STAFF', object_type='STAFF', object_id=staff_id, details=f"Xóa nhân viên ID: {staff_id}", ip_address=request.remote_addr)
+        return jsonify({'message': f'Xóa nhân viên ID {staff_id} thành công'}), 200
+    except Exception as e:
+        return jsonify({'message': 'Lỗi khi xóa nhân viên', 'error': str(e)}), 500
+
+@app.route('/admin/activity-log', methods=['GET'])
+@token_required
+def get_activity_log_api(current_user):
+    page = request.args.get('page', 1, type=int)
+    search_term = request.args.get('search', '', type=str)
+    # Thêm các filters khác nếu bạn triển khai
+
+    try:
+        # Bạn cần triển khai hàm get_activity_logs_paginated trong database.py
+        # Hàm này nên trả về cả dữ liệu log và thông tin phân trang
+        logs, pagination_info = db.get_activity_logs_paginated(page=page, search_term=search_term)
+        return jsonify({'data': logs, 'paginationInfo': pagination_info}), 200
+    except Exception as e:
+        print(f"Error fetching activity log: {e}") # Log lỗi phía server
+        return jsonify({'message': 'Lỗi khi lấy lịch sử hoạt động', 'error': str(e)}), 500
+
 if __name__ == '__main__':
     print("\n" + "="*50)
     print("Starting Customer Counting and Classification API...")

@@ -370,3 +370,69 @@ class Database:
         
         conn.commit()
         conn.close()
+               
+    def get_user_by_id(self, user_id):
+        conn = sqlite3.connect(self.db_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, username, full_name, position FROM users WHERE id = ?", (user_id,))
+        user_data = cursor.fetchone()
+        conn.close()
+        if user_data:
+            return {"id": user_data[0], "username": user_data[1], "full_name": user_data[2], "position": user_data[3]}
+        return None
+
+    def add_activity_log(self, user_id, username, action_type, object_type=None, object_id=None, details=None, ip_address=None):
+        conn = sqlite3.connect(self.db_name)
+        cursor = conn.cursor()
+        timestamp = datetime.now().isoformat()
+        try:
+            cursor.execute('''
+                INSERT INTO activity_logs (timestamp, user_id, username, action_type, object_type, object_id, details, ip_address)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (timestamp, user_id, username, action_type, object_type, object_id, details, ip_address))
+            conn.commit()
+        except Exception as e:
+            print(f"Error adding activity log: {e}") # Ghi log lỗi nếu có
+        finally:
+            conn.close()
+
+    def get_activity_logs_paginated(self, page=1, per_page=10, search_term=''):
+        conn = sqlite3.connect(self.db_name)
+        conn.row_factory = sqlite3.Row # Để truy cập cột bằng tên
+        cursor = conn.cursor()
+        
+        offset = (page - 1) * per_page
+        
+        query = "SELECT * FROM activity_logs"
+        params = []
+        
+        if search_term:
+            query += " WHERE username LIKE ? OR action_type LIKE ? OR details LIKE ?"
+            params.extend([f'%{search_term}%', f'%{search_term}%', f'%{search_term}%'])
+            
+        query += " ORDER BY timestamp DESC LIMIT ? OFFSET ?"
+        params.extend([per_page, offset])
+        
+        cursor.execute(query, params)
+        logs = [dict(row) for row in cursor.fetchall()]
+        
+        # Lấy tổng số bản ghi để tính toán phân trang
+        count_query = "SELECT COUNT(*) FROM activity_logs"
+        count_params = []
+        if search_term:
+            count_query += " WHERE username LIKE ? OR action_type LIKE ? OR details LIKE ?"
+            count_params.extend([f'%{search_term}%', f'%{search_term}%', f'%{search_term}%'])
+
+        cursor.execute(count_query, count_params)
+        total_items = cursor.fetchone()[0]
+        total_pages = (total_items + per_page - 1) // per_page # Phép chia làm tròn lên
+        
+        conn.close()
+        
+        pagination_info = {
+            'currentPage': page,
+            'totalPages': total_pages,
+            'perPage': per_page,
+            'totalItems': total_items
+        }
+        return logs, pagination_info
