@@ -39,36 +39,39 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Xử lý thêm nhân viên
+    document.addEventListener('DOMContentLoaded', function() {
+    // Xử lý thêm nhân viên
     document.getElementById('submitAddStaff').addEventListener('click', async function() {
         const name = document.getElementById('staffName').value;
         const age = document.getElementById('staffAge').value;
         const gender = document.querySelector('input[name="staffGender"]:checked').value;
         const experience = document.getElementById('staffExperience').value;
-        
+
         if (!name || !age || !gender || !experience) {
             alert('Vui lòng điền đầy đủ thông tin nhân viên');
             return;
         }
-        
+
         const staffData = {
             name: name,
             age: parseInt(age),
             gender: gender,
-            experience_level: experience
+            experience_level: experience 
         };
-        
+
         const response = await apiService.addStaff(staffData);
-        
+
         if (response.success) {
-            // Đóng modal và làm mới dữ liệu
             const modal = bootstrap.Modal.getInstance(document.getElementById('addStaffModal'));
             modal.hide();
             document.getElementById('addStaffForm').reset();
-            loadStaffData(); // Tải lại danh sách nhân viên
+            loadStaffData();
         } else {
             alert('Lỗi: ' + (response.message || 'Không thể thêm nhân viên'));
         }
     });
+});
+
 });
 
 // Kiểm tra trạng thái đăng nhập
@@ -95,102 +98,104 @@ function checkLoginStatus() {
     }
 }
 
-// Khởi tạo các biểu đồ
+// Khởi tạo biểu đồ
 function initCharts() {
-    // Chart.js - Biểu đồ xu hướng khách hàng
-    const trendsCtx = document.getElementById('customerTrendsChart').getContext('2d');
-    window.customerTrendsChart = new Chart(trendsCtx, {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [
-                {
-                    label: 'Tổng số khách',
-                    data: [],
-                    borderColor: '#0d6efd',
-                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                    borderWidth: 2,
-                    fill: true
-                },
-                {
-                    label: 'Nam',
-                    data: [],
-                    borderColor: '#1976d2',
-                    backgroundColor: 'transparent',
-                    borderWidth: 2
-                },
-                {
-                    label: 'Nữ',
-                    data: [],
-                    borderColor: '#d81b60',
-                    backgroundColor: 'transparent',
-                    borderWidth: 2
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: {
-                    grid: {
-                        display: false
+    // Biểu đồ xu hướng khách hàng
+    const trendsCanvas = document.getElementById('customerTrendsChart');
+    if (trendsCanvas) {
+        const trendsCtx = trendsCanvas.getContext('2d');
+        window.customerTrendsChart = new Chart(trendsCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Tổng số khách',
+                        data: [],
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        borderWidth: 2,
+                        fill: true
+                    },
+                    {
+                        label: 'Nam',
+                        data: [],
+                        borderColor: '#1976d2',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Nữ',
+                        data: [],
+                        borderColor: '#d81b60',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2
                     }
-                },
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        precision: 0
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: { display: false }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 }
                     }
                 }
             }
-        }
-    });
-    
-    // Chart.js - Biểu đồ phân bố giới tính
-    const genderCtx = document.getElementById('genderPieChart').getContext('2d');
-    window.genderPieChart = new Chart(genderCtx, {
-        type: 'pie',
-        data: {
-            labels: ['Nam', 'Nữ'],
-            datasets: [{
-                data: [0, 0],
-                backgroundColor: ['#1976d2', '#d81b60']
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
+        });
+    }
+
+    // Biểu đồ phân bố giới tính
+    const genderCanvas = document.getElementById('genderPieChart');
+    if (genderCanvas) {
+        const genderCtx = genderCanvas.getContext('2d');
+        window.genderPieChart = new Chart(genderCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Nam', 'Nữ'],
+                datasets: [{
+                    data: [0, 0],
+                    backgroundColor: ['#1976d2', '#d81b60']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
                 }
             }
-        }
-    });
-    
-    // Chart.js - Biểu đồ phân bố độ tuổi
-    const ageCtx = document.getElementById('agePieChart').getContext('2d');
-    window.agePieChart = new Chart(ageCtx, {
-        type: 'pie',
-        data: {
-            labels: ['Trẻ (0-20)', 'Thanh niên (21-40)', 'Trung niên (41-60)', 'Cao tuổi (60+)'],
-            datasets: [{
-                data: [0, 0, 0, 0],
-                backgroundColor: ['#4caf50', '#ff9800', '#795548', '#607d8b']
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
+        });
+    }
+
+    // Biểu đồ phân bố độ tuổi
+    const ageCanvas = document.getElementById('agePieChart');
+    if (ageCanvas) {
+        const ageCtx = ageCanvas.getContext('2d');
+        window.agePieChart = new Chart(ageCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Trẻ (0-20)', 'Thanh niên (21-40)', 'Trung niên (41-60)', 'Cao tuổi (60+)'],
+                datasets: [{
+                    data: [0, 0, 0, 0],
+                    backgroundColor: ['#4caf50', '#ff9800', '#795548', '#607d8b']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
                 }
             }
-        }
-    });
+        });
+    }
 }
+
 
 // Tải dữ liệu phân tích từ API
 async function loadAnalyticsData(timeFrame = 'week') {
@@ -203,10 +208,12 @@ async function loadAnalyticsData(timeFrame = 'week') {
     if (response.success) {
         updateChartsWithData(response.data, timeFrame);
         updateAnalyticsTable(response.data);
-    } else {
-        console.error('Failed to load analytics data');
     }
+    else {
+        console.error('Failed to load analytics data');
+    }  
 }
+
 
 // Cập nhật biểu đồ với dữ liệu từ API
 function updateChartsWithData(data, timeFrame) {

@@ -26,7 +26,7 @@ class ApiService {
             });
 
             const data = await response.json();
-            
+
             if (data.token) {
                 // Lưu token vào localStorage và cập nhật token trong instance
                 localStorage.setItem('adminToken', data.token);
@@ -54,9 +54,9 @@ class ApiService {
             });
 
             const data = await response.json();
-            return { 
-                success: response.ok, 
-                message: data.message 
+            return {
+                success: response.ok,
+                message: data.message
             };
         } catch (error) {
             console.error('Registration error:', error);
@@ -84,13 +84,90 @@ class ApiService {
             });
 
             const data = await response.json();
-            return { 
-                success: response.ok, 
-                message: data.message 
+            return {
+                success: response.ok,
+                message: data.message
             };
         } catch (error) {
             console.error('Change password error:', error);
             return { success: false, message: 'Lỗi kết nối với server' };
+        }
+    }
+
+    // Thêm nhân viên
+    async addStaff(staffData) {
+        try {
+            const response = await fetch(`${this.baseUrl}/api/employees`, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify(staffData)
+            });
+
+            const data = await response.json();
+            return { success: response.ok, message: data.message || 'Thêm nhân viên thành công' };
+        } catch (error) {
+            console.error('Add staff error:', error);
+            return { success: false, message: 'Lỗi kết nối với server' };
+        }
+    }
+
+    // Lấy dữ liệu phân tích
+    async getAnalytics(days) {
+        try {
+            const response = await fetch(`${this.baseUrl}/historical_data?days=${days}`, {
+                method: 'GET',
+                headers: this.getHeaders()
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Error fetching analytics:', errorData);
+                return { success: false, message: errorData.message || 'Lỗi khi lấy dữ liệu phân tích' };
+            }
+
+            const data = await response.json();
+            return { success: true, data: data };
+        } catch (error) {
+            console.error('Error fetching analytics:', error);
+            return { success: false, message: 'Lỗi kết nối với server khi lấy dữ liệu phân tích' };
+        }
+    }
+
+    // Lấy dữ liệu nhân viên
+    async getStaff() {
+        try {
+            const response = await fetch(`${this.baseUrl}/auth/users`, {
+                method: 'GET',
+                headers: this.getHeaders()
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Error fetching staff data:', errorData);
+                return { success: false, message: errorData.message || 'Lỗi khi lấy dữ liệu nhân viên' };
+            }
+
+            const data = await response.json();
+            return { success: true, data: data };
+        } catch (error) {
+            console.error('Error fetching staff data:', error);
+            return { success: false, message: 'Lỗi kết nối với server khi lấy dữ liệu nhân viên' };
+        }
+    }
+
+    // Xóa nhân viên
+    async deleteStaff(staffId) {
+        try {
+            const response = await fetch(`${this.baseUrl}/api/employees/${staffId}`, {
+                method: 'DELETE',
+                headers: this.getHeaders()
+            });
+
+            const data = await response.json();
+            return { success: response.ok, message: data.message || 'Xóa nhân viên thành công' };
+        } catch (error) {
+            console.error('Delete staff error:', error);
+            return { success: false, message: 'Lỗi kết nối với server khi xóa nhân viên' };
         }
     }
 

@@ -344,9 +344,11 @@ def get_latest_analysis():
     return jsonify(latest_analysis)
 
 @app.route('/historical_data')
-def get_historical_data():
-    data = db.get_historical_data()
-    return jsonify(data)
+@token_required
+def get_historical_data(current_user):
+    days = request.args.get('days', default=7, type=int)
+    data = db.get_historical_data(days=days)
+    return jsonify({'success': True, 'data': data})
 
 @app.route('/auth/login', methods=['POST'])
 def login():
@@ -459,6 +461,42 @@ def init_camera():
             print("Camera initialized successfully.")
     except Exception as e:
         print(f"Error initializing camera: {e}")
+
+@app.route('/api/employees', methods=['POST'])
+@token_required
+def add_employee(current_user):
+    data = request.json
+    
+    # Validate input dữ liệu
+    required_fields = ['name', 'age', 'gender', 'experience']
+    for field in required_fields:
+        if field not in data or not data[field]:
+            return jsonify({'message': f'Field "{field}" is required!'}), 400
+    
+    # Kiểm tra quyền (giả sử chỉ admin mới được thêm nhân viên)
+    user = db.get_user_by_id(current_user)
+    if not user or user.get('position') != 'admin':
+        return jsonify({'message': 'You do not have permission to add employees'}), 403
+    
+    # Thêm nhân viên vào database
+    success, message = db.create_user(
+        data['name'],
+        data['age'],
+        data['gender'],
+        data['experience'],
+    )
+    
+    if not success:
+        return jsonify({'message': message}), 400
+    
+    return jsonify({'message': 'Employee added successfully'}), 201
+
+# Xóa nhân viên
+@app.route('/api/employees/<int:employee_id>', methods=['DELETE'])
+@token_required
+def delete_employee(current_user, employee_id):
+    db.delete_staff(employee_id)
+    return jsonify({'success': True, 'message': f'Employee with ID {employee_id} deleted successfully'}), 200
 
 # Initialize camera when app starts
 init_camera()

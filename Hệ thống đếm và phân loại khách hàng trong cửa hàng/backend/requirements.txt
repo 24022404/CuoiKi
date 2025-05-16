@@ -1,7 +1,7 @@
-flask
+Flask
 flask-cors
-pyjwt
 deepface
+opencv-python-headless
 numpy
-opencv-python
-gunicorn
+pyjwt
+tf-keras
