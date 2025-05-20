@@ -1,20 +1,19 @@
-# Bản sửa lỗi cho app.py - sao chép nội dung này vào app.py nếu muốn áp dụng
-
 from flask import Flask, request, jsonify, Response
 from deepface import DeepFace
 import cv2
 import numpy as np
-import threading
 import time
-import json
+import threading
 from flask_cors import CORS
 from datetime import datetime
-import os
+from threading import Thread
 import base64
+import os
 from database import Database
 import jwt
 from functools import wraps
 from datetime import datetime, timedelta
+from face_analysis_utils import *
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -37,216 +36,76 @@ latest_analysis = {
 }
 
 # Camera settings and variables
+frame_lock = threading.Lock()
+last_processed_frame = None
+frame_count = 0
+FRAME_INTERVAL = 5  # Cứ mỗi 5 frame thì xử lý 1 lần
+input_frame = None
 camera = None
-processing_frame = False
-processed_frame = None
+processing = False  
 detector_backends = ['opencv', 'ssd', 'mtcnn', 'retinaface']  # Danh sách các detector
 current_detector_index = 0  # Bắt đầu với opencv
 failed_detections = 0  # Đếm số lần không phát hiện được khuôn mặt
-max_failed_detections = 30  # Số lần tối đa trước khi chuyển detector
+max_failed_detections = 30  # frame_lock Số lần tối đa trước khi chuyển detector
 
 app.config['SECRET_KEY'] = 'your-secret-key-change-this'  # Change this in production!
 app.config['JWT_EXPIRATION_DELTA'] = 24 * 60 * 60  # 24 hours in seconds
-
-def get_age_group(age):
-    if age <= 20:
-        return "young"
-    elif age <= 40:
-        return "adult"
-    elif age <= 60:
-        return "middle_aged"
-    else:
-        return "elderly"
 
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
-        
+
         # Get token from Authorization header
         auth_header = request.headers.get('Authorization')
         if auth_header and auth_header.startswith('Bearer '):
             token = auth_header.split(' ')[1]
-        
+
         if not token:
             return jsonify({'message': 'Token is missing!'}), 401
-        
+
         try:
             # Decode token
             data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
-            current_user = data['user_id']
-        except:
-            return jsonify({'message': 'Token is invalid!'}), 401
-            
-        return f(current_user, *args, **kwargs)
-    
+            user_id = data.get('user_id')
+            if not user_id:
+                return jsonify({'message': 'Token payload missing user ID'}), 401
+        except jwt.ExpiredSignatureError:
+            return jsonify({'message': 'Token expired'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'message': 'Token is invalid'}), 401
+
+        return f(user_id, *args, **kwargs)  # Trả lại user_id để dùng tiếp
+
     return decorated
 
 def process_frame(frame):
-    global latest_analysis, processing_frame, current_detector_index, failed_detections
-    
-    if processing_frame:
-        return
-    
-    processing_frame = True
-    
+    global latest_analysis
     try:
-        # Log thông tin cấu hình
-        current_detector = detector_backends[current_detector_index]
-        print(f"Đang sử dụng detector: {current_detector}")
-        
-        # Cải thiện 1: Tiền xử lý hình ảnh (tăng độ tương phản)
-        # Điều chỉnh độ sáng và độ tương phản để cải thiện chất lượng
-        alpha = 1.3  # Độ tương phản (1.0-3.0)
-        beta = 10    # Độ sáng (0-100)
-        frame = cv2.convertScaleAbs(frame, alpha=alpha, beta=beta)
-        
-        # Resize frame for faster processing
-        small_frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
-        
-        # Convert to RGB for DeepFace
-        rgb_small_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
-        
-        # Cải thiện 2: Sử dụng mô hình cụ thể cho phân tích giới tính
-        # VGG-Face thường cho kết quả tốt hơn với giới tính
-        results = DeepFace.analyze(
-            img_path=rgb_small_frame,
-            actions=['age', 'gender'],
-            enforce_detection=False,
-            detector_backend=current_detector,
-            prog_bar=False  # Tắt thanh tiến trình để giảm log
-        )
-        
-        # If single face is detected, convert to list
-        if isinstance(results, dict):
-            results = [results]
-        
-        # Reset counts
+        detector = 'opencv'
+        frame = enhance_frame(frame)
+        rgb_small = preprocess_frame(frame)
+        results = analyze_faces(rgb_small, detector)
+
         total_count = len(results)
-        
-        # Kiểm tra số khuôn mặt phát hiện được
-        if total_count == 0:
-            failed_detections += 1
-            print(f"Không phát hiện khuôn mặt nào. Lần thử {failed_detections}/{max_failed_detections}")
-            
-            # Nếu quá nhiều lần không phát hiện được, thử chuyển sang detector khác
-            if failed_detections >= max_failed_detections:
-                current_detector_index = (current_detector_index + 1) % len(detector_backends)
-                print(f"Đã chuyển sang detector: {detector_backends[current_detector_index]}")
-                failed_detections = 0
-        else:
-            # Phát hiện thành công, reset đếm
-            failed_detections = 0
-            print(f"Đã phát hiện {total_count} khuôn mặt!")
-                
-        male_count = 0
-        female_count = 0
-        age_groups = {
-            "young": 0,
-            "adult": 0, 
-            "middle_aged": 0,
-            "elderly": 0
-        }
-        
-        # Process each detected face
+        male_count = female_count = 0
+        age_groups = {"young": 0, "adult": 0, "middle_aged": 0, "elderly": 0}
+
         for face in results:
-            print(f"Khuôn mặt: {face.get('gender', {})}")
-            
-            # Cải thiện 3: Sử dụng ngưỡng tin cậy cho nhận dạng giới tính
-            gender_data = face.get("gender", {})
-            gender_confidence = 0
-            
-            if isinstance(gender_data, dict) and "Woman" in gender_data and "Man" in gender_data:
-                # Sử dụng độ tin cậy để cải thiện độ chính xác
-                if gender_data["Woman"] > gender_data["Man"]:
-                    gender = "Woman"
-                    gender_confidence = gender_data["Woman"]
-                else:
-                    gender = "Man"
-                    gender_confidence = gender_data["Man"]
-                
-                # Chỉ tính nếu độ tin cậy cao (trên 60%)
-                if gender_confidence > 60:
-                    if gender == "Man":
-                        male_count += 1
-                    else:
-                        female_count += 1
-                else:
-                    # Nếu độ tin cậy thấp, thử đoán dựa trên các đặc điểm khác như tỷ lệ khuôn mặt
-                    # Đây là một cách tiếp cận đơn giản, có thể không chính xác
-                    region = face.get("region", {})
-                    if region:
-                        w, h = region.get("w", 0), region.get("h", 0)
-                        ratio = w/h if h > 0 else 0
-                        if ratio > 0.85:  # Khuôn mặt hơi vuông hơn, khả năng cao là nam
-                            male_count += 1
-                        else:
-                            female_count += 1
-            elif isinstance(gender_data, str):
-                # Xử lý trường hợp gender_data trả về string
-                if gender_data == "Man":
-                    male_count += 1
-                else:
-                    female_count += 1
-            else:
-                # Trường hợp không xác định rõ
-                # Tính theo độ tuổi - nam giới thường có đặc trưng khuôn mặt rõ hơn ở độ tuổi trung niên
-                age = face.get("age", 30)
-                if 30 <= age <= 60:
-                    male_count += 1
-                else:
-                    # Chia đều nam/nữ nếu không thể xác định rõ
-                    if total_count % 2 == 0:
-                        male_count += 1
-                    else:
-                        female_count += 1
-                
-            # Count by age group
-            print(f"Khuôn mặt: {face.get('gender', {}).get('dominant', 'Unknown')}, {face.get('age', 0)} tuổi")
-            
-            # Count by gender
-            if face.get("gender", {}).get("dominant") == "Man":
-                male_count += 1
-            else:
-                female_count += 1
-                
-            # Count by age group
             age = face.get("age", 0)
+            region = face.get("region", {})
+            gender, confidence = classify_gender(face)
+
+            if gender == "Man":
+                male_count += 1
+            elif gender == "Woman":
+                female_count += 1
+
             age_group = get_age_group(age)
             age_groups[age_group] += 1
-            
-            # Draw on frame (for visualization)
-            region = face.get("region", {})
-            if region:
-                x, y, w, h = region.get("x", 0), region.get("y", 0), region.get("w", 0), region.get("h", 0)
-                x, y, w, h = int(x*2), int(y*2), int(w*2), int(h*2)  # Scale back to original size
-                
-                # Cải thiện 4: Màu và hiển thị rõ ràng hơn
-                if isinstance(gender_data, dict) and "Woman" in gender_data and "Man" in gender_data:
-                    woman_score = gender_data.get("Woman", 0)
-                    man_score = gender_data.get("Man", 0)
-                    gender = "Woman" if woman_score > man_score else "Man"
-                    color = (0, 255, 0) if gender == "Woman" else (255, 0, 0)
-                    # Thêm độ tin cậy vào nhãn
-                    confidence = woman_score if gender == "Woman" else man_score
-                    label = f"{gender} ({confidence:.0f}%)"
-                elif isinstance(gender_data, str):
-                    gender = gender_data
-                    color = (0, 255, 0) if gender == "Woman" else (255, 0, 0)
-                    label = gender
-                else:
-                    gender = "Unknown"
-                    color = (255, 255, 0)  # Màu vàng cho không xác định
-                    label = gender
-                    
-                cv2.rectangle(frame, (x, y), (x+w, y+h), color, 2)
-                
-                # Add text for age and gender with better visibility
-                age = face.get("age", 0)
-                cv2.rectangle(frame, (x, y-40), (x+len(label)*12, y-10), (0, 0, 0), -1)
-                cv2.putText(frame, f"{label}, {age}", (x, y-15), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-        
-        # Update latest analysis
+
+            draw_face_overlay(frame, face, gender, age, region, confidence)
+
         latest_analysis = {
             "total_count": total_count,
             "male_count": male_count,
@@ -254,61 +113,56 @@ def process_frame(frame):
             "age_groups": age_groups,
             "timestamp": datetime.now().isoformat()
         }
-        
-        # Save to database
-        db.save_analysis(latest_analysis)
-        
-        # Add summary text to frame
-        summary = f"Total: {total_count} | Male: {male_count} | Female: {female_count}"
-        cv2.putText(frame, summary, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-        
-        age_summary = f"Young: {age_groups['young']} | Adult: {age_groups['adult']} | Middle: {age_groups['middle_aged']} | Elderly: {age_groups['elderly']}"
-        cv2.putText(frame, age_summary, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-        
-        # Add detector info
-        detector_info = f"Detector: {current_detector}"
-        cv2.putText(frame, detector_info, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-        
-        global processed_frame
-        processed_frame = frame.copy()
-        
+
+        draw_summary_overlay(frame, latest_analysis, detector)
+
     except Exception as e:
-        print(f"Lỗi khi xử lý frame: {e}")
-    
-    finally:
-        processing_frame = False
+        print(f"Lỗi khi xử lý khung hình: {e}")
+
+    return frame
+
+def frame_processor():
+    global input_frame, last_processed_frame, processing, frame_count
+    while True:
+        time.sleep(0.005)  # tránh busy-loop quá mức
+        if processing:
+            continue
+
+        with frame_lock:
+            frame = input_frame
+            current_frame_count = frame_count
+
+        if frame is None or current_frame_count % FRAME_INTERVAL != 0:
+            continue
+
+        processing = True
+        try:
+            processed = process_frame(frame)
+            with frame_lock:
+                last_processed_frame = processed.copy()
+        except Exception as e:
+            print("❌ Error in background processing:", e)
+        finally:
+            with frame_lock:
+                input_frame = None
+            processing = False
 
 def gen_frames():
-    global camera, processed_frame
-    
-    if camera is None:
-        camera = cv2.VideoCapture(0)  # Use default camera
-        
-        # Thử thiết lập độ phân giải cao hơn cho webcam
-        camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-    
+    global input_frame
+    count = 0
     while True:
         success, frame = camera.read()
         if not success:
-            print("Không thể đọc được frame từ camera!")
             break
-        
-        # Process frame in a separate thread to avoid blocking
-        threading.Thread(target=process_frame, args=(frame.copy(),)).start()
-        
-        # Use processed frame if available, otherwise use original
-        display_frame = processed_frame if processed_frame is not None else frame
-        
-        # Convert to JPEG
-        ret, buffer = cv2.imencode('.jpg', display_frame)
-        frame_bytes = buffer.tobytes()
-        
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-        
-        # Điều chỉnh tốc độ khung hình, tăng lên để giảm độ trễ
-        time.sleep(0.05)
+        count += 1
+        if count % FRAME_INTERVAL == 0:
+            with frame_lock:
+                input_frame = frame.copy()
+        with frame_lock:
+            output = last_processed_frame.copy() if last_processed_frame is not None else frame
+        _, buffer = cv2.imencode('.jpg', output)
+        yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+    camera.release()
 
 @app.route('/video_feed')
 def video_feed():
@@ -348,7 +202,7 @@ def get_latest_analysis():
 def get_historical_data(current_user):
     days = request.args.get('days', default=7, type=int)
     data = db.get_historical_data(days=days)
-    return jsonify({'success': True, 'data': data})
+    return jsonify(data)
 
 @app.route('/auth/login', methods=['POST'])
 def login():
@@ -452,8 +306,8 @@ def init_camera():
     global camera
     try:
         camera = cv2.VideoCapture(0)  # Use default camera
-        camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
         
         if not camera.isOpened():
             print("Warning: Could not open camera. Video feed will not work.")
@@ -508,5 +362,21 @@ if __name__ == '__main__':
     print("2. Mở giao diện web bằng cách mở file: frontend/index.html trong trình duyệt")
     print("3. Nếu gặp sự cố, hãy chạy: python test_camera.py để kiểm tra camera")
     print("="*50 + "\n")
-    
+
+    # Warm-up DeepFace
+    def warmup_deepface():
+        dummy = np.zeros((224, 224, 3), dtype=np.uint8)
+        try:
+            DeepFace.analyze(img_path=dummy, actions=['age', 'gender'], enforce_detection=False)
+            print("🟢 DeepFace warm-up hoàn tất.")
+        except Exception as e:
+            print("❌ Warm-up lỗi:", e)
+
+    warmup_deepface()
+
+    # Khởi động luồng xử lý nền (nếu cần thiết)
+    processing_thread = Thread(target=frame_processor, daemon=True)
+    processing_thread.start()
+
+    # Khởi động Flask app
     app.run(host='0.0.0.0', port=5000, debug=True)

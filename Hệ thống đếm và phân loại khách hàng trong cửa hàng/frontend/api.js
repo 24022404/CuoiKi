@@ -125,8 +125,9 @@ class ApiService {
                 return { success: false, message: errorData.message || 'Lỗi khi lấy dữ liệu phân tích' };
             }
 
-            const data = await response.json();
-            return { success: true, data: data };
+            const result = await response.json();
+            return { success: result.success, data: result.data }; 
+
         } catch (error) {
             console.error('Error fetching analytics:', error);
             return { success: false, message: 'Lỗi kết nối với server khi lấy dữ liệu phân tích' };
