@@ -5,3 +5,5 @@ opencv-python-headless
 numpy
 pyjwt
 tf-keras
+redis
+psutil

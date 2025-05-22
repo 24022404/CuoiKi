@@ -3,7 +3,7 @@
 let isVideoPaused = false;
 let videoFeed = null;
 let capturedImageData = null;
-const API_URL = 'http://localhost:5000';
+const API_URL = 'http://backend:5000';
 // Add redirect guard to prevent loops
 let isRedirecting = false;
 // Add login check tracking
