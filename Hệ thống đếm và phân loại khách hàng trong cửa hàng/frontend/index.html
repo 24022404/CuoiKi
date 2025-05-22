@@ -79,9 +79,6 @@
                             <button id="toggleVideo" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-pause-fill"></i> Tạm Dừng
                             </button>
-                            <button id="captureImage" class="btn btn-sm btn-outline-success ms-2">
-                                <i class="bi bi-camera"></i> Chụp Ảnh
-                            </button>
                         </div>
                     </div>
                     <div class="card-body">
@@ -96,10 +93,13 @@
                 
                 <!-- Event Effectiveness Report Section -->
                 <div class="card mb-4 shadow">
-                    <div class="card-header bg-dark text-white">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">
                             <i class="bi bi-calendar-event me-2"></i>Sự kiện đang diễn ra
                         </h5>
+                        <button class="btn btn-sm btn-outline-light" onclick="checkActiveEvents()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Làm mới
+                        </button>
                     </div>
                     <div class="card-body">
                         <div id="eventStatus" class="alert alert-primary border-0 shadow-sm mb-4 d-flex align-items-center">
@@ -107,12 +107,11 @@
                             <span id="eventStatusText" class="fw-medium">Kiểm tra sự kiện...</span>
                         </div>
                         
-                        <div id="eventReportContent" class="d-none">
+                        <div id="eventReportContent" class="fade-in">
                             <!-- This will contain multiple event cards -->
                             <div id="activeEventsContainer" class="events-container">
                                 <!-- Events will be dynamically inserted here -->
                             </div>
-                            <!-- No buttons here - removed the "Chi tiết phân tích" button -->
                         </div>
                         
                         <div id="noEventContent">

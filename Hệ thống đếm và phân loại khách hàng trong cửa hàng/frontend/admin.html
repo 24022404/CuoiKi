@@ -1,4 +1,6 @@
+<!-- hello -->
 <!DOCTYPE html>
+<!-- hello -->
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -97,50 +99,11 @@
                                         <th>Đối Tượng Mục Tiêu</th>
                                         <th>Giới Tính Mục Tiêu</th>
                                         <th>Trạng Thái</th>
-                                        <th>Số Lượng KH</th>
                                         <th>Hành Động</th>
                                     </tr>
                                 </thead>
                                 <tbody id="eventsTableBody">
-                                    <!-- Sample data, will be populated by JS -->
-                                    <tr>
-                                        <td>Khuyến mãi cho người trẻ</td>
-                                        <td>15/11/2023 - 20/11/2023</td>
-                                        <td><span class="badge bg-success">Trẻ (0-20)</span></td>
-                                        <td><span class="badge bg-info">Nam</span></td>
-                                        <td><span class="badge bg-primary">Đang diễn ra</span></td>
-                                        <td>45 <small class="text-success">(87% đúng mục tiêu)</small></td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-info" data-event-id="1">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-primary" data-event-id="1">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-danger" data-event-id="1">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Giảm giá cho khách hàng cao tuổi</td>
-                                        <td>25/11/2023 - 30/11/2023</td>
-                                        <td><span class="badge bg-danger">Cao tuổi (60+)</span></td>
-                                        <td><span class="badge bg-secondary">Tất cả</span></td>
-                                        <td><span class="badge bg-secondary">Sắp diễn ra</span></td>
-                                        <td>0 <small class="text-muted">(chưa bắt đầu)</small></td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-info" data-event-id="2">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-primary" data-event-id="2">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-danger" data-event-id="2">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
+                                    <!-- Events will be dynamically inserted here -->
                                 </tbody>
                             </table>
                         </div>
@@ -483,11 +446,11 @@
                                 <label for="eventType" class="form-label">Loại Sự Kiện</label>
                                 <select class="form-select" id="eventType" required>
                                     <option value="">Chọn loại</option>
-                                    <option value="promotion">Khuyến mãi</option>
-                                    <option value="sale">Giảm giá</option>
-                                    <option value="product_launch">Ra mắt sản phẩm</option>
-                                    <option value="customer_day">Ngày hội khách hàng</option>
-                                    <option value="other">Khác</option>
+                                    <option value="Khuyến mãi">Khuyến mãi</option>
+                                    <option value="Giảm giá">Giảm giá</option>
+                                    <option value="Ra mắt sản phẩm">Ra mắt sản phẩm</option>
+                                    <option value="Ngày hội khách hàng">Ngày hội khách hàng</option>
+                                    <option value="khác">Khác</option>
                                 </select>
                             </div>
                         </div>
@@ -606,11 +569,11 @@
                                 <label for="editEventType" class="form-label">Loại Sự Kiện</label>
                                 <select class="form-select" id="editEventType" required>
                                     <option value="">Chọn loại</option>
-                                    <option value="promotion">Khuyến mãi</option>
-                                    <option value="sale">Giảm giá</option>
-                                    <option value="product_launch">Ra mắt sản phẩm</option>
-                                    <option value="customer_day">Ngày hội khách hàng</option>
-                                    <option value="other">Khác</option>
+                                    <option value="Khuyến mãi">Khuyến mãi</option>
+                                    <option value="Giảm giá">Giảm giá</option>
+                                    <option value="Ra mắt sản phẩm">Ra mắt sản phẩm</option>
+                                    <option value="Ngày hội khách hàng">Ngày hội khách hàng</option>
+                                    <option value="khác">Khác</option>
                                 </select>
                             </div>
                         </div>

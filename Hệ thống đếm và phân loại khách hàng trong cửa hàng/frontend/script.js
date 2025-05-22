@@ -1,3 +1,4 @@
+// hello
 // Global variables
 let isVideoPaused = false;
 let videoFeed = null;
@@ -498,697 +499,99 @@ function checkActiveEvents() {
     const noEventContent = document.getElementById('noEventContent');
     const activeEventsContainer = document.getElementById('activeEventsContainer');
     
-    // Set loading state
-    eventStatusText.textContent = "Đang tải dữ liệu sự kiện...";
-    eventStatus.className = "alert alert-primary border-0 shadow-sm mb-4 d-flex align-items-center";
+    // Show loading state
+    if (eventStatus) {
+        eventStatus.className = 'alert alert-info border-0 shadow-sm mb-4 d-flex align-items-center';
+        eventStatusText.innerHTML = '<i class="spinner-border spinner-border-sm me-2"></i> Đang kiểm tra sự kiện...';
+    }
     
-    // Fetch active events from API
-    fetch(`${API_URL}/api/events/active`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(events => {
-        if (events && Array.isArray(events) && events.length > 0) {
-            // We have active events
-            eventStatusText.textContent = `Đang diễn ra ${events.length} sự kiện`;
-            eventStatus.className = "alert alert-success border-0 shadow-sm mb-4 d-flex align-items-center";
-            
-            // Show event content and hide no-event message
-            eventReportContent.classList.remove('d-none');
-            noEventContent.style.display = 'none';
-            
-            // Clear previous events
-            activeEventsContainer.innerHTML = '';
-            
-            // Render each event
-            events.forEach(event => renderEventCard(event, activeEventsContainer));
-        } else {
-            // No active events
-            eventStatusText.textContent = "Không có sự kiện nào đang diễn ra";
-            eventStatus.className = "alert alert-info border-0 shadow-sm mb-4 d-flex align-items-center";
-            
-            // Hide event content and show no-event message
-            eventReportContent.classList.add('d-none');
-            noEventContent.style.display = 'block';
-        }
-    })
-    .catch(error => {
-        console.error('Error fetching events:', error);
-        eventStatusText.textContent = "Lỗi khi tải dữ liệu sự kiện";
-        eventStatus.className = "alert alert-danger border-0 shadow-sm mb-4 d-flex align-items-center";
-        
-        // Hide event content and show no-event message
-        eventReportContent.classList.add('d-none');
-        noEventContent.style.display = 'block';
-    });
+    fetch(`${API_URL}/api/events/active`)
+        .then(response => response.json())
+        .then(events => {
+            if (Array.isArray(events) && events.length > 0) {
+                // Show event status
+                eventStatus.className = 'alert alert-success border-0 shadow-sm mb-4 d-flex align-items-center';
+                eventStatusText.innerHTML = `<i class="bi bi-calendar-check me-2"></i> Đang có ${events.length} sự kiện diễn ra`;
+                
+                // Show event content and hide no-event message
+                if (eventReportContent) eventReportContent.style.display = 'block';
+                if (noEventContent) noEventContent.style.display = 'none';
+                
+                // Clear previous events
+                if (activeEventsContainer) activeEventsContainer.innerHTML = '';
+                
+                // Add each event
+                events.forEach(event => {
+                    const eventCard = createEventCard(event);
+                    if (activeEventsContainer) activeEventsContainer.appendChild(eventCard);
+                });
+            } else {
+                // No active events
+                eventStatus.className = 'alert alert-secondary border-0 shadow-sm mb-4 d-flex align-items-center';
+                eventStatusText.innerHTML = '<i class="bi bi-calendar-x me-2"></i> Không có sự kiện nào đang diễn ra';
+                
+                // Hide event content and show no-event message
+                if (eventReportContent) eventReportContent.style.display = 'none';
+                if (noEventContent) noEventContent.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error checking for active events:', error);
+            eventStatus.className = 'alert alert-danger border-0 shadow-sm mb-4 d-flex align-items-center';
+            eventStatusText.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i> Lỗi khi kiểm tra sự kiện';
+        });
 }
 
-// Add function to render an event card
-function renderEventCard(event, container) {
-    // Format dates for display
-    const startDate = new Date(event.start_date).toLocaleString();
-    const endDate = new Date(event.end_date).toLocaleString();
+// Create event card without target/visitor metrics
+function createEventCard(event) {
+    const startDate = new Date(event.start_date).toLocaleDateString();
+    const endDate = new Date(event.end_date).toLocaleDateString();
     
-    // Create the event card element
-    const eventCard = document.createElement('div');
-    eventCard.className = 'card event-card mb-3';
-    eventCard.innerHTML = `
-        <div class="card-body p-4" style="background: linear-gradient(135deg, #f8f9fa, #e2f0fb);">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <div class="d-flex align-items-center mb-2">
-                        <span class="badge bg-success me-2 pulse-animation">ĐANG DIỄN RA</span>
-                        <h5 class="card-title fw-bold mb-0">${event.name}</h5>
-                    </div>
-                    <p class="text-muted mb-3">${event.description || 'Không có mô tả'}</p>
-                </div>
-                <div class="text-end">
-                    <span class="badge ${getEventTypeBadgeClass(event.type)}">${formatEventType(event.type)}</span>
-                </div>
-            </div>
-            
-            <div class="row mt-3">
+    const card = document.createElement('div');
+    card.className = 'card mb-3 shadow-sm';
+    
+    // Format event type for display
+    let eventTypeLabel = 'Sự kiện';
+    switch (event.type) {
+        case 'Khuyến mãi': eventTypeLabel = 'Khuyến mãi'; break;
+        case 'Giảm giá': eventTypeLabel = 'Giảm giá'; break;
+        case 'Ra mắt sản phẩm': eventTypeLabel = 'Ra mắt sản phẩm'; break;
+        case 'Ngày hội khách hàng': eventTypeLabel = 'Ngày hội khách hàng'; break;
+    }
+    
+    card.innerHTML = `
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">${event.name}</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
                 <div class="col-md-6">
-                    <div class="event-info-item d-flex">
-                        <i class="bi bi-clock-fill text-primary me-2"></i>
-                        <div>
-                            <p class="text-muted small mb-0">Bắt đầu</p>
-                            <p class="fw-medium mb-2">${startDate}</p>
-                        </div>
-                    </div>
-                    <div class="event-info-item d-flex">
-                        <i class="bi bi-clock-history text-primary me-2"></i>
-                        <div>
-                            <p class="text-muted small mb-0">Kết thúc</p>
-                            <p class="fw-medium mb-0">${endDate}</p>
-                        </div>
-                    </div>
+                    <p class="mb-1"><strong>Loại sự kiện:</strong> ${eventTypeLabel}</p>
+                    <p class="mb-1"><strong>Thời gian:</strong> ${startDate} - ${endDate}</p>
                 </div>
                 <div class="col-md-6">
-                    <div class="event-info-item d-flex">
-                        <i class="bi bi-people-fill text-primary me-2"></i>
-                        <div>
-                            <p class="text-muted small mb-0">Đối tượng mục tiêu</p>
-                            <div class="event-badge-container">
-                                ${renderAudienceBadges(event.target_audience)}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="event-info-item d-flex mt-2">
-                        <i class="bi bi-gender-ambiguous text-primary me-2"></i>
-                        <div>
-                            <p class="text-muted small mb-0">Giới tính mục tiêu</p>
-                            <span class="badge ${getGenderBadgeClass(event.target_gender)}">${formatGender(event.target_gender)}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="mt-3 pt-2 border-top">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="text-primary"><i class="bi bi-people"></i> Khách: <strong>${event.visitor_count || 0}</strong></span>
-                        <span class="ms-3 text-success"><i class="bi bi-bullseye"></i> Đúng đối tượng: <strong>${event.target_match_percent || 0}%</strong></span>
-                    </div>
+                    <p class="mb-1"><strong>Mô tả:</strong></p>
+                    <p class="text-muted">${event.description || 'Không có mô tả'}</p>
                 </div>
             </div>
         </div>
     `;
     
-    // Add to container
-    container.appendChild(eventCard);
-}
-
-// Helper functions for event display
-function getEventTypeBadgeClass(type) {
-    switch (type) {
-        case 'promotion': return 'bg-warning';
-        case 'sale': return 'bg-danger';
-        case 'product_launch': return 'bg-info';
-        case 'customer_day': return 'bg-success';
-        default: return 'bg-secondary';
-    }
-}
-
-function formatEventType(type) {
-    switch (type) {
-        case 'promotion': return 'Khuyến mãi';
-        case 'sale': return 'Giảm giá';
-        case 'product_launch': return 'Ra mắt sản phẩm';
-        case 'customer_day': return 'Ngày hội khách hàng';
-        default: return 'Khác';
-    }
-}
-
-function getGenderBadgeClass(gender) {
-    switch (gender) {
-        case 'male': return 'bg-info';
-        case 'female': return 'bg-danger';
-        default: return 'bg-secondary';
-    }
-}
-
-function formatGender(gender) {
-    switch (gender) {
-        case 'male': return 'Nam';
-        case 'female': return 'Nữ';
-        default: return 'Tất cả';
-    }
-}
-
-function renderAudienceBadges(targetAudience) {
-    if (!targetAudience || !Array.isArray(targetAudience) || targetAudience.length === 0) {
-        return '<span class="badge bg-secondary">Tất cả</span>';
-    }
-    
-    const badges = {
-        'young': '<span class="badge bg-success me-1">Trẻ (0-20)</span>',
-        'adult': '<span class="badge bg-info me-1">Thanh niên (21-40)</span>',
-        'middle_aged': '<span class="badge bg-warning me-1">Trung niên (41-60)</span>',
-        'elderly': '<span class="badge bg-danger me-1">Cao tuổi (60+)</span>'
-    };
-    
-    return targetAudience.map(audience => badges[audience] || '').join('');
-}
-
-// View event details function (placeholder)
-function viewEventDetails(eventId) {
-    console.log(`Viewing details for event ${eventId}`);
-    // This would typically open a modal or navigate to a details page
-    alert(`Đang xem chi tiết sự kiện: ${eventId}`);
-}
-
-// Update init function to check for active events
-document.addEventListener('DOMContentLoaded', function() {
-    // ...existing code...
-    
-    // Check active events if user is logged in
-    if (checkLoginStatus()) {
-        // Fetch initial data
-        fetchCustomerCounts();
-        
-        // Check for active events
-        checkActiveEvents();
-        
-        // Set up intervals
-        setInterval(fetchCustomerCounts, 5000);
-        setInterval(checkActiveEvents, 30000); // Check events every 30 seconds
-    }
-});
-
-// Update event details in the UI
-function updateEventDetails(event) {
-    document.getElementById('eventName').textContent = event.name;
-    
-    // Format dates for display
-    const startDate = new Date(event.start_date);
-    const endDate = new Date(event.end_date);
-    
-    document.getElementById('eventStartTime').textContent = startDate.toLocaleString();
-    document.getElementById('eventEndTime').textContent = endDate.toLocaleString();
-    
-    // Format and display target audience
-    let targetAudienceText = '-';
-    if (event.target_audience && Array.isArray(event.target_audience) && event.target_audience.length > 0) {
-        const audienceLabels = {
-            'young': 'Trẻ (0-20)',
-            'adult': 'Thanh niên (21-40)',
-            'middle_aged': 'Trung niên (41-60)',
-            'elderly': 'Cao tuổi (60+)'
-        };
-        
-        targetAudienceText = event.target_audience
-            .map(audience => audienceLabels[audience] || audience)
-            .join(', ');
-    }
-    document.getElementById('eventTargetAudience').textContent = targetAudienceText;
-    
-    // Format and display target gender
-    let targetGenderText = '-';
-    switch(event.target_gender) {
-        case 'male':
-            targetGenderText = 'Nam';
-            break;
-        case 'female':
-            targetGenderText = 'Nữ';
-            break;
-        case 'all':
-            targetGenderText = 'Tất cả';
-            break;
-        default:
-            targetGenderText = event.target_gender || 'Tất cả';
-    }
-    document.getElementById('eventTargetGender').textContent = targetGenderText;
-}
-
-// Analyze event effectiveness based on customer data and event targets
-function analyzeEventEffectiveness(event) {
-    // Fetch latest customer analytics
-    fetch(`${API_URL}/latest_analysis`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to fetch analytics data');
-            }
-            return response.json();
-        })
-        .then(data => {
-            const targetAudience = Array.isArray(event.target_audience) ? event.target_audience : [];
-            const targetGender = event.target_gender || 'all';
-            
-            // Calculate audience match percentage
-            let audienceMatches = 0;
-            let totalCustomers = data.total_count || 0;
-            
-            if (totalCustomers === 0) {
-                return;
-            }
-            
-            // Calculate how many customers match the target demographics
-            if (targetAudience.includes('young')) {
-                audienceMatches += data.age_groups.young || 0;
-            }
-            if (targetAudience.includes('adult')) {
-                audienceMatches += data.age_groups.adult || 0;
-            }
-            if (targetAudience.includes('middle_aged')) {
-                audienceMatches += data.age_groups.middle_aged || 0;
-            }
-            if (targetAudience.includes('elderly')) {
-                audienceMatches += data.age_groups.elderly || 0;
-            }
-            
-            // Adjust for gender target if specified
-            if (targetGender === 'male') {
-                const maleRatio = data.male_count / totalCustomers;
-                audienceMatches = Math.round(audienceMatches * maleRatio);
-            } else if (targetGender === 'female') {
-                const femaleRatio = data.female_count / totalCustomers;
-                audienceMatches = Math.round(audienceMatches * femaleRatio);
-            }
-            
-            // Calculate match percentage
-            const matchPercent = Math.round((audienceMatches / totalCustomers) * 100);
-            
-            // Save event statistics to database via API but don't update UI displays
-            updateEventStats(event.id, totalCustomers, matchPercent, audienceMatches);
-        })
-        .catch(error => {
-            console.error('Error analyzing event effectiveness:', error);
-        });
-}
-
-// Update event statistics in the database
-function updateEventStats(eventId, visitorCount, matchPercent, targetMatches) {
-    console.log(`Updating event stats: ID=${eventId}, visitors=${visitorCount}, matches=${targetMatches}, percent=${matchPercent}%`);
-    
-    fetch(`${API_URL}/api/events/${eventId}/stats`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            visitor_count: visitorCount,
-            target_match_percent: matchPercent,
-            target_matches: targetMatches
-        })
-    })
-    .then(response => {
-        if (!response.ok) {
-            console.error('Failed to update event statistics', response.status, response.statusText);
-            throw new Error('Failed to update event statistics');
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Event statistics updated successfully:', data);
-    })
-    .catch(error => {
-        console.error('Error updating event statistics:', error);
-    });
-}
-
-// Add this function to update event information including new target audience and gender fields
-function updateEventInformation(eventData) {
-    // Update event basic information
-    document.getElementById('eventName').textContent = eventData.name || '-';
-    document.getElementById('eventStartTime').textContent = formatDateTime(eventData.start_date) || '-';
-    document.getElementById('eventEndTime').textContent = formatDateTime(eventData.end_date) || '-';
-    
-    // Format and display target audience
-    let targetAudienceText = '-';
-    if (eventData.target_audience && Array.isArray(eventData.target_audience) && eventData.target_audience.length > 0) {
-        const audienceLabels = {
-            'young': 'Trẻ (0-20)',
-            'adult': 'Thanh niên (21-40)',
-            'middle_aged': 'Trung niên (41-60)',
-            'elderly': 'Cao tuổi (60+)'
-        };
-        
-        targetAudienceText = eventData.target_audience
-            .map(audience => audienceLabels[audience] || audience)
-            .join(', ');
-    }
-    document.getElementById('eventTargetAudience').textContent = targetAudienceText;
-    
-    // Format and display target gender
-    let targetGenderText = '-';
-    switch(eventData.target_gender) {
-        case 'male':
-            targetGenderText = 'Nam';
-            break;
-        case 'female':
-            targetGenderText = 'Nữ';
-            break;
-        case 'all':
-            targetGenderText = 'Tất cả';
-            break;
-        default:
-            targetGenderText = eventData.target_gender || 'Tất cả';
-    }
-    document.getElementById('eventTargetGender').textContent = targetGenderText;
-}
-
-// Helper function to format date and time
-function formatDateTime(dateTimeStr) {
-    if (!dateTimeStr) return '-';
-    
-    try {
-        const date = new Date(dateTimeStr);
-        return date.toLocaleString('vi-VN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    } catch (e) {
-        console.error('Error formatting date:', e);
-        return dateTimeStr;
-    }
+    return card;
 }
 
 // Update event effectiveness based on customer data
 function updateEventEffectiveness(data) {
-    // Get current active event if any
+    // Check for active events but don't update visitor counts
     fetch(`${API_URL}/api/events/active`)
         .then(response => response.json())
-        .then(event => {
-            if (event) {
-                analyzeEventEffectiveness(event);
+        .then(events => {
+            if (Array.isArray(events) && events.length > 0) {
+                // We have active events, but we're not displaying metrics now
+                console.log("Active events found, but metrics display is disabled");
             }
         })
-        .catch(error => console.error('Error checking for active event:', error));
-}
-
-// Analyze event effectiveness based on customer data and event targets
-function analyzeEventEffectiveness(event) {
-    // Fetch latest customer analytics
-    fetch(`${API_URL}/latest_analysis`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to fetch analytics data');
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Event effectiveness analysis data:', data);
-            console.log('Event target settings:', event);
-            
-            // Validate target audience is an array
-            const targetAudience = Array.isArray(event.target_audience) ? event.target_audience : [];
-            const targetGender = event.target_gender || 'all';
-            
-            // Calculate audience match percentage
-            let audienceMatches = 0;
-            let totalCustomers = data.total_count || 0;
-            
-            if (totalCustomers === 0) {
-                console.log('No customers detected, skipping target audience calculation');
-                return;
-            }
-            
-            // Ensure age_groups object exists
-            const ageGroups = data.age_groups || {};
-            console.log('Age groups data:', ageGroups);
-            
-            // Calculate how many customers match the target demographics with better validation
-            if (targetAudience.includes('young') && typeof ageGroups.young === 'number') {
-                audienceMatches += ageGroups.young;
-                console.log(`Added ${ageGroups.young} young customers to match count`);
-            }
-            if (targetAudience.includes('adult') && typeof ageGroups.adult === 'number') {
-                audienceMatches += ageGroups.adult;
-                console.log(`Added ${ageGroups.adult} adult customers to match count`);
-            }
-            if (targetAudience.includes('middle_aged') && typeof ageGroups.middle_aged === 'number') {
-                audienceMatches += ageGroups.middle_aged;
-                console.log(`Added ${ageGroups.middle_aged} middle-aged customers to match count`);
-            }
-            if (targetAudience.includes('elderly') && typeof ageGroups.elderly === 'number') {
-                audienceMatches += ageGroups.elderly;
-                console.log(`Added ${ageGroups.elderly} elderly customers to match count`);
-            }
-            
-            console.log(`Initial audience matches (age only): ${audienceMatches}`);
-            
-            // Adjust for gender target if specified with validation against division by zero
-            if (targetGender === 'male' && data.male_count > 0 && totalCustomers > 0) {
-                const maleRatio = data.male_count / totalCustomers;
-                const previousMatches = audienceMatches;
-                audienceMatches = Math.round(audienceMatches * maleRatio);
-                console.log(`Applied male filter: ${previousMatches} * ${maleRatio} = ${audienceMatches}`);
-            } else if (targetGender === 'female' && data.female_count > 0 && totalCustomers > 0) {
-                const femaleRatio = data.female_count / totalCustomers;
-                const previousMatches = audienceMatches;
-                audienceMatches = Math.round(audienceMatches * femaleRatio);
-                console.log(`Applied female filter: ${previousMatches} * ${femaleRatio} = ${audienceMatches}`);
-            }
-            
-            // Default to at least 0 matches (prevent negative numbers)
-            audienceMatches = Math.max(0, audienceMatches);
-            
-            // Calculate match percentage with validation against division by zero
-            const matchPercent = totalCustomers > 0 ? Math.round((audienceMatches / totalCustomers) * 100) : 0;
-            
-            console.log(`Final calculation: ${audienceMatches} matches out of ${totalCustomers} customers (${matchPercent}%)`);
-            
-            // Update UI with target audience matches - ensure elements exist before updating
-            const eventTargetVisitors = document.getElementById('eventTargetVisitors');
-            if (eventTargetVisitors) {
-                eventTargetVisitors.textContent = audienceMatches;
-                // Add data attribute for tracking
-                eventTargetVisitors.setAttribute('data-match-percent', matchPercent);
-                console.log(`Updated eventTargetVisitors element with value: ${audienceMatches}`);
-            } else {
-                console.warn('eventTargetVisitors element not found in DOM');
-            }
-            
-            // Also update the total visitors count to ensure consistency
-            const eventTotalVisitors = document.getElementById('eventTotalVisitors');
-            if (eventTotalVisitors) {
-                eventTotalVisitors.textContent = totalCustomers;
-                console.log(`Updated eventTotalVisitors element with value: ${totalCustomers}`);
-            } else {
-                console.warn('eventTotalVisitors element not found in DOM');
-            }
-            
-            // Save event statistics to database via API with target matches info
-            updateEventStats(event.id, totalCustomers, matchPercent, audienceMatches);
-        })
-        .catch(error => {
-            console.error('Error analyzing event effectiveness:', error);
-        });
-}
-
-// Generate staff recommendations for the current event - Function kept for reference but not called
-function generateEventStaffRecommendations(event, data) {
-    // This function is no longer used as the staff recommendations section has been removed
-    // Code kept for reference
-}
-
-// Update the function to fetch active events
-async function fetchActiveEvents() {
-    try {
-        // Use the active events endpoint instead of the general events endpoint
-        const response = await fetch(`${API_URL}/api/events/active`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to fetch active events');
-        }
-
-        const activeEvents = await response.json();
-        
-        // Update UI based on whether there are active events
-        const eventStatus = document.getElementById('eventStatus');
-        const eventStatusText = document.getElementById('eventStatusText');
-        const eventReportContent = document.getElementById('eventReportContent');
-        const noEventContent = document.getElementById('noEventContent');
-        const activeEventsContainer = document.getElementById('activeEventsContainer');
-        
-        // Clear previous events
-        activeEventsContainer.innerHTML = '';
-        
-        if (activeEvents && activeEvents.length > 0) {
-            // Show report content and hide no event message
-            eventReportContent.classList.remove('d-none');
-            noEventContent.classList.add('d-none');
-            
-            // Update status message
-            eventStatus.classList.remove('alert-info', 'alert-warning');
-            eventStatus.classList.add('alert-success');
-            eventStatusText.textContent = `Đang có ${activeEvents.length} sự kiện diễn ra`;
-            
-            // Create a card for each active event
-            activeEvents.forEach(event => {
-                const eventCard = createEventCard(event);
-                activeEventsContainer.appendChild(eventCard);
-            });
-        } else {
-            // Show no event message and hide report content
-            eventReportContent.classList.add('d-none');
-            noEventContent.classList.remove('d-none');
-            
-            // Update status message
-            eventStatus.classList.remove('alert-success', 'alert-warning');
-            eventStatus.classList.add('alert-info');
-            eventStatusText.textContent = 'Không có sự kiện nào đang diễn ra';
-        }
-        
-        return activeEvents;
-    } catch (error) {
-        console.error('Error fetching active events:', error);
-        // Show error status
-        const eventStatus = document.getElementById('eventStatus');
-        const eventStatusText = document.getElementById('eventStatusText');
-        
-        eventStatus.classList.remove('alert-success', 'alert-info');
-        eventStatus.classList.add('alert-warning');
-        eventStatusText.textContent = 'Lỗi khi tải dữ liệu sự kiện';
-        
-        return [];
-    }
-}
-
-// Helper function to create an event card
-function createEventCard(event) {
-    const cardDiv = document.createElement('div');
-    cardDiv.className = 'card border-0 bg-gradient shadow-sm mb-3 event-card';
-    cardDiv.style.background = 'linear-gradient(135deg, #f8f9fa, #e2f0fb)';
-    
-    // Format the target audience for display
-    let audienceBadges = '';
-    if (event.target_audience && Array.isArray(event.target_audience)) {
-        event.target_audience.forEach(audience => {
-            let badgeClass = '';
-            let audienceLabel = '';
-            
-            switch(audience) {
-                case 'young':
-                    badgeClass = 'bg-success';
-                    audienceLabel = 'Trẻ (0-20)';
-                    break;
-                case 'adult':
-                    badgeClass = 'bg-info';
-                    audienceLabel = 'Thanh niên (21-40)';
-                    break;
-                case 'middle_aged':
-                    badgeClass = 'bg-warning';
-                    audienceLabel = 'Trung niên (41-60)';
-                    break;
-                case 'elderly':
-                    badgeClass = 'bg-danger';
-                    audienceLabel = 'Cao tuổi (60+)';
-                    break;
-            }
-            
-            audienceBadges += `<span class="badge ${badgeClass} me-1">${audienceLabel}</span>`;
-        });
-    }
-    
-    // Format gender target badge
-    let genderBadge = '';
-    switch(event.target_gender) {
-        case 'male':
-            genderBadge = '<span class="badge bg-primary">Nam</span>';
-            break;
-        case 'female':
-            genderBadge = '<span class="badge bg-danger">Nữ</span>';
-            break;
-        default:
-            genderBadge = '<span class="badge bg-secondary">Tất cả</span>';
-            break;
-    }
-    
-    // Format dates
-    const startDate = new Date(event.start_date).toLocaleString('vi-VN');
-    const endDate = new Date(event.end_date).toLocaleString('vi-VN');
-    
-    cardDiv.innerHTML = `
-        <div class="card-body p-4">
-            <div class="d-flex align-items-center mb-3">
-                <span class="badge bg-success me-2 pulse-animation">ĐANG DIỄN RA</span>
-                <h5 class="card-title fw-bold mb-0">${event.name}</h5>
-            </div>
-            
-            <div class="row mt-3">
-                <div class="col-md-6">
-                    <div class="event-info-item">
-                        <i class="bi bi-clock-fill text-primary me-2"></i>
-                        <div>
-                            <p class="text-muted small mb-0">Thời gian bắt đầu</p>
-                            <p class="fw-medium mb-3">${startDate}</p>
-                        </div>
-                    </div>
-                    <div class="event-info-item">
-                        <i class="bi bi-clock-history text-primary me-2"></i>
-                        <div>
-                            <p class="text-muted small mb-0">Thời gian kết thúc</p>
-                            <p class="fw-medium mb-0">${endDate}</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="event-info-item">
-                        <i class="bi bi-people-fill text-primary me-2"></i>
-                        <div>
-                            <p class="text-muted small mb-0">Đối tượng mục tiêu</p>
-                            <div class="event-badge-container">${audienceBadges}</div>
-                        </div>
-                    </div>
-                    <div class="event-info-item">
-                        <i class="bi bi-gender-ambiguous text-primary me-2"></i>
-                        <div>
-                            <p class="text-muted small mb-0">Giới tính mục tiêu</p>
-                            <div>${genderBadge}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            ${event.description ? `
-            <div class="mt-3 pt-3 border-top">
-                <p class="text-muted small mb-1">Mô tả</p>
-                <p class="mb-0">${event.description}</p>
-            </div>
-            ` : ''}
-        </div>
-    `;
-    
-    return cardDiv;
+        .catch(error => console.error('Error checking for active events:', error));
 }
 
 // Add click handler for the "View All Events" button
@@ -1204,4 +607,179 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Check for active events and display event information
+function checkActiveEvents() {
+    const eventStatus = document.getElementById('eventStatus');
+    const eventStatusText = document.getElementById('eventStatusText');
+    const eventReportContent = document.getElementById('eventReportContent');
+    const noEventContent = document.getElementById('noEventContent');
+    const activeEventsContainer = document.getElementById('activeEventsContainer');
+    
+    fetch(`${API_URL}/api/events/active`)
+        .then(response => response.json())
+        .then(events => {
+            if (events && events.length > 0) {
+                // We have active events
+                eventStatus.className = 'alert alert-success border-0 shadow-sm mb-4 d-flex align-items-center';
+                eventStatusText.textContent = `Có ${events.length} sự kiện đang diễn ra`;
+                eventReportContent.style.display = 'block';
+                noEventContent.style.display = 'none';
+                
+                // Clear previous event cards
+                activeEventsContainer.innerHTML = '';
+                
+                // Add event cards for each active event
+                events.forEach(event => {
+                    // Parse JSON strings to objects if needed
+                    const targetAudience = typeof event.target_audience === 'string' 
+                        ? JSON.parse(event.target_audience) 
+                        : event.target_audience;
+                    
+                    // Format dates for display
+                    const startDate = new Date(event.start_date).toLocaleDateString('vi-VN');
+                    const endDate = new Date(event.end_date).toLocaleDateString('vi-VN');
+                    
+                    // Create audience badges HTML
+                    let audienceBadges = '';
+                    if (Array.isArray(targetAudience)) {
+                        targetAudience.forEach(audience => {
+                            let badgeClass = '';
+                            let audienceLabel = '';
+                            
+                            switch(audience) {
+                                case 'young':
+                                    badgeClass = 'bg-success';
+                                    audienceLabel = 'Trẻ (0-20)';
+                                    break;
+                                case 'adult':
+                                    badgeClass = 'bg-info';
+                                    audienceLabel = 'Thanh niên (21-40)';
+                                    break;
+                                case 'middle_aged':
+                                    badgeClass = 'bg-warning';
+                                    audienceLabel = 'Trung niên (41-60)';
+                                    break;
+                                case 'elderly':
+                                    badgeClass = 'bg-danger';
+                                    audienceLabel = 'Cao tuổi (60+)';
+                                    break;
+                            }
+                            
+                            audienceBadges += `<span class="badge ${badgeClass} me-1">${audienceLabel}</span>`;
+                        });
+                    }
+                    
+                    // Create gender badge
+                    let genderBadge = '';
+                    switch(event.target_gender) {
+                        case 'male':
+                            genderBadge = '<span class="badge bg-info">Nam</span>';
+                            break;
+                        case 'female':
+                            genderBadge = '<span class="badge bg-danger">Nữ</span>';
+                            break;
+                        default:
+                            genderBadge = '<span class="badge bg-secondary">Tất cả</span>';
+                    }
+                    
+                    // Create event card with complete information
+                    const eventCard = `
+                        <div class="card mb-3 shadow-sm event-card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">${event.name}</h5>
+                                <span class="badge bg-primary">Đang diễn ra</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-2">
+                                    <div class="col-md-6">
+                                        <p class="mb-1"><strong>Thời gian:</strong> ${startDate} - ${endDate}</p>
+                                        <p class="mb-1"><strong>Loại sự kiện:</strong> ${event.type || 'Không xác định'}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p class="mb-1"><strong>Độ tuổi mục tiêu:</strong> ${audienceBadges || 'Không xác định'}</p>
+                                        <p class="mb-1"><strong>Giới tính mục tiêu:</strong> ${genderBadge}</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <p class="mb-1"><strong>Mô tả:</strong></p>
+                                    <p class="text-muted">${event.description || 'Không có mô tả'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    activeEventsContainer.innerHTML += eventCard;
+                });
+                
+                // Update event visitor counts based on current detected faces
+                updateEventStats(events);
+            } else {
+                // No active events
+                eventStatus.className = 'alert alert-secondary border-0 shadow-sm mb-4 d-flex align-items-center';
+                eventStatusText.textContent = 'Không có sự kiện nào đang diễn ra';
+                eventReportContent.style.display = 'none';
+                noEventContent.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error checking for active events:', error);
+            eventStatus.className = 'alert alert-warning border-0 shadow-sm mb-4 d-flex align-items-center';
+            eventStatusText.textContent = 'Không thể kiểm tra sự kiện. Vui lòng thử lại sau.';
+        });
+}
+
+// New function to update event statistics based on detected faces
+function updateEventStats(events) {
+    if (!events || !events.length) return;
+    
+    // Get latest analysis data
+    fetch(`${API_URL}/latest_analysis`)
+        .then(response => response.json())
+        .then(data => {
+            // Update each active event's statistics
+            events.forEach(event => {
+                // Calculate match percentage based on target audience and gender
+                let matchedCount = 0;
+                let totalCount = data.total_count || 0;
+                
+                if (totalCount === 0) return; // Skip if no people detected
+                
+                const targetAudience = typeof event.target_audience === 'string' 
+                    ? JSON.parse(event.target_audience) 
+                    : event.target_audience;
+                
+                // Count people matching target age groups
+                if (Array.isArray(targetAudience) && targetAudience.length > 0) {
+                    targetAudience.forEach(audience => {
+                        matchedCount += data.age_groups[audience] || 0;
+                    });
+                }
+                
+                // Further filter by target gender if specified
+                if (event.target_gender === 'male') {
+                    matchedCount = Math.min(matchedCount, data.male_count);
+                } else if (event.target_gender === 'female') {
+                    matchedCount = Math.min(matchedCount, data.female_count);
+                }
+                
+                // Calculate match percentage
+                const matchPercent = totalCount > 0 ? Math.round((matchedCount / totalCount) * 100) : 0;
+                
+                // Update the event stats in the database
+                fetch(`${API_URL}/api/events/${event.id}/stats`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        visitor_count: totalCount,
+                        target_match_percent: matchPercent
+                    })
+                })
+                .catch(error => console.error(`Error updating stats for event ${event.id}:`, error));
+            });
+        })
+        .catch(error => console.error('Error fetching analysis data for event stats:', error));
+}
 // ...existing code...

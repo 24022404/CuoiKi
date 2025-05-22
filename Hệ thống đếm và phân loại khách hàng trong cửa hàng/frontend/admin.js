@@ -713,24 +713,12 @@ function updateEventsTableContent(tableBody, events) {
                 break;
         }
         
-        // Format visitor count display
-        let visitorDisplay = '';
-        if (event.status === 'upcoming') {
-            visitorDisplay = '0 <small class="text-muted">(chưa bắt đầu)</small>';
-        } else {
-            const matchPercent = event.target_match_percent || 0;
-            let percentClass = matchPercent > 70 ? 'text-success' : 'text-warning';
-            
-            visitorDisplay = `${event.visitor_count || 0} <small class="${percentClass}">(${matchPercent}% đúng mục tiêu)</small>`;
-        }
-        
         row.innerHTML = `
             <td>${event.name}</td>
             <td>${startDate} - ${endDate}</td>
             <td>${audienceBadges}</td>
             <td>${genderBadge}</td>
             <td>${statusBadge}</td>
-            <td>${visitorDisplay}</td>
             <td>
                 <button class="btn btn-sm btn-outline-info view-event-btn" onclick="viewEvent('${event.id}')">
                     <i class="bi bi-eye"></i>
@@ -875,9 +863,168 @@ function filterEvents(status) {
 
 // View event details
 function viewEvent(eventId) {
-    // This would typically populate a modal with event details
-    alert(`Viewing event with ID: ${eventId}`);
-    // Future implementation: Fetch event details and display in a modal
+    // Fetch event details from the database
+    apiService.getEventDetails(eventId)
+        .then(response => {
+            if (response.success) {
+                const event = response.data;
+                
+                // Parse JSON fields if needed
+                const targetAudience = typeof event.target_audience === 'string' 
+                    ? JSON.parse(event.target_audience) 
+                    : event.target_audience;
+                
+                // Format dates for display
+                const startDate = new Date(event.start_date).toLocaleDateString('vi-VN');
+                const endDate = new Date(event.end_date).toLocaleDateString('vi-VN');
+                
+                // Create audience badges HTML
+                let audienceBadges = '';
+                if (Array.isArray(targetAudience)) {
+                    targetAudience.forEach(audience => {
+                        let badgeClass = '';
+                        let audienceLabel = '';
+                        
+                        switch(audience) {
+                            case 'young':
+                                badgeClass = 'bg-success';
+                                audienceLabel = 'Trẻ (0-20)';
+                                break;
+                            case 'adult':
+                                badgeClass = 'bg-info';
+                                audienceLabel = 'Thanh niên (21-40)';
+                                break;
+                            case 'middle_aged':
+                                badgeClass = 'bg-warning';
+                                audienceLabel = 'Trung niên (41-60)';
+                                break;
+                            case 'elderly':
+                                badgeClass = 'bg-danger';
+                                audienceLabel = 'Cao tuổi (60+)';
+                                break;
+                        }
+                        
+                        audienceBadges += `<span class="badge ${badgeClass} me-1">${audienceLabel}</span>`;
+                    });
+                }
+                
+                // Create gender badge
+                let genderBadge = '';
+                switch(event.target_gender) {
+                    case 'male':
+                        genderBadge = '<span class="badge bg-info">Nam</span>';
+                        break;
+                    case 'female':
+                        genderBadge = '<span class="badge bg-danger">Nữ</span>';
+                        break;
+                    default:
+                        genderBadge = '<span class="badge bg-secondary">Tất cả</span>';
+                }
+                
+                // Create event details modal content
+                const modalContent = `
+                    <div class="modal-header">
+                        <h5 class="modal-title">Chi Tiết Sự Kiện: ${event.name}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <p><strong>Tên sự kiện:</strong> ${event.name}</p>
+                                <p><strong>Loại sự kiện:</strong> ${event.type || 'Không xác định'}</p>
+                                <p><strong>Thời gian:</strong> ${startDate} - ${endDate}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Đối tượng mục tiêu:</strong> ${audienceBadges || 'Không xác định'}</p>
+                                <p><strong>Giới tính mục tiêu:</strong> ${genderBadge}</p>
+                                <p><strong>Số lượng mục tiêu:</strong> ${event.target_count || 'Không giới hạn'}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <p><strong>Mô tả sự kiện:</strong></p>
+                            <p class="text-muted">${event.description || 'Không có mô tả'}</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <p><strong>Trạng thái:</strong> 
+                                <span class="badge ${
+                                    event.status === 'active' ? 'bg-primary' : 
+                                    event.status === 'upcoming' ? 'bg-secondary' : 'bg-success'
+                                }">
+                                    ${
+                                        event.status === 'active' ? 'Đang diễn ra' :
+                                        event.status === 'upcoming' ? 'Sắp diễn ra' : 'Đã kết thúc'
+                                    }
+                                </span>
+                            </p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <p><strong>Thống kê hiện tại:</strong></p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p>Số lượng khách: ${event.visitor_count || 0}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p>Tỷ lệ phù hợp: ${event.target_match_percent || 0}%</p>
+                                </div>
+                            </div>
+                            <div class="progress" style="height: 25px;">
+                                <div class="progress-bar ${
+                                    event.target_match_percent >= 85 ? 'bg-success' :
+                                    event.target_match_percent >= 70 ? 'bg-info' :
+                                    event.target_match_percent >= 50 ? 'bg-warning' : 'bg-danger'
+                                }" role="progressbar" 
+                                    style="width: ${event.target_match_percent || 0}%;" 
+                                    aria-valuenow="${event.target_match_percent || 0}" 
+                                    aria-valuemin="0" aria-valuemax="100">
+                                    ${event.target_match_percent || 0}% phù hợp mục tiêu
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        <button type="button" class="btn btn-primary" onclick="editEvent('${event.id}')">
+                            <i class="bi bi-pencil"></i> Chỉnh sửa
+                        </button>
+                    </div>
+                `;
+                
+                // Create and show the modal
+                const modalElement = document.createElement('div');
+                modalElement.className = 'modal fade';
+                modalElement.id = 'viewEventModal';
+                modalElement.tabIndex = '-1';
+                modalElement.innerHTML = `
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            ${modalContent}
+                        </div>
+                    </div>
+                `;
+                
+                // Remove any existing instance of the modal
+                const existingModal = document.getElementById('viewEventModal');
+                if (existingModal) {
+                    existingModal.remove();
+                }
+                
+                // Add the modal to the document
+                document.body.appendChild(modalElement);
+                
+                // Show the modal
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            } else {
+                alert('Error: ' + (response.message || 'Failed to load event details'));
+            }
+        })
+        .catch(error => {
+            console.error('Error viewing event:', error);
+            alert('Failed to load event details. Please try again.');
+        });
 }
 
 // Edit event
