@@ -1,3 +1,4 @@
+<!-- hello -->
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -22,15 +23,51 @@
                     <li class="nav-item">
                         <a class="nav-link active" href="index.html">Trang Chính</a>
                     </li>
-                    <li class="nav-item">
+                    <!-- Admin button - Only shows for admin users -->
+                    <li class="nav-item" id="adminButton" style="display: none;">
                         <a class="nav-link" href="admin.html">Quản Trị</a>
+                    </li>
+                    <!-- User menu - Only shows when logged in -->
+                    <li class="nav-item dropdown user-menu" style="display: none;">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle me-1"></i><span id="currentUsername">Người dùng</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item logout-button" href="#" id="logoutButton" onclick="window.performLogout(); return false;"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a></li>
+                        </ul>
+                    </li>
+                    <!-- Login link - Only shows when logged out -->
+                    <li class="nav-item login-menu">
+                        <a class="nav-link" href="login.html">
+                            <i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập
+                        </a>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <div class="container mt-4">
+    <!-- Login required message - Shows when not logged in -->
+    <div class="container mt-5" id="loginRequiredMessage">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-body text-center p-5">
+                        <i class="bi bi-shield-lock text-primary" style="font-size: 4rem;"></i>
+                        <h3 class="mt-4">Yêu cầu đăng nhập</h3>
+                        <p class="text-muted">Bạn cần đăng nhập để sử dụng hệ thống</p>
+                        <a href="login.html" class="btn btn-primary mt-3">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content container - Only visible when logged in -->
+    <div class="container mt-4" id="contentContainer" style="display: none;">
         <div class="row">
             <div class="col-lg-8">
                 <div class="card mb-4 shadow">
@@ -59,71 +96,29 @@
                 
                 <!-- Event Effectiveness Report Section -->
                 <div class="card mb-4 shadow">
-                    <div class="card-header">
+                    <div class="card-header bg-dark text-white">
                         <h5 class="mb-0">
-                            <i class="bi bi-calendar-event me-2"></i>Báo cáo hiệu quả sự kiện (nếu đang diễn ra sự kiện)
+                            <i class="bi bi-calendar-event me-2"></i>Sự kiện đang diễn ra
                         </h5>
                     </div>
                     <div class="card-body">
-                        <div id="eventStatus" class="alert alert-info mb-4">
-                            <i class="bi bi-info-circle me-2"></i>
-                            <span id="eventStatusText">Hiện không có sự kiện nào đang diễn ra</span>
+                        <div id="eventStatus" class="alert alert-primary border-0 shadow-sm mb-4 d-flex align-items-center">
+                            <i class="bi bi-info-circle-fill me-3 fs-4"></i>
+                            <span id="eventStatusText" class="fw-medium">Kiểm tra sự kiện...</span>
                         </div>
                         
                         <div id="eventReportContent" class="d-none">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="card border-0 bg-light mb-3">
-                                        <div class="card-body">
-                                            <h6 class="card-title">Thông tin sự kiện</h6>
-                                            <p class="mb-1"><strong>Tên sự kiện:</strong> <span id="eventName">-</span></p>
-                                            <p class="mb-1"><strong>Thời gian bắt đầu:</strong> <span id="eventStartTime">-</span></p>
-                                            <p class="mb-0"><strong>Thời gian kết thúc:</strong> <span id="eventEndTime">-</span></p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="card border-0 bg-light mb-3">
-                                        <div class="card-body">
-                                            <h6 class="card-title">Số liệu khách tham dự</h6>
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span>Tổng số khách:</span>
-                                                <span id="eventTotalVisitors" class="fw-bold">0</span>
-                                            </div>
-                                            <div class="progress mb-3" style="height: 25px;">
-                                                <div id="eventTargetProgress" class="progress-bar bg-success" role="progressbar" style="width: 0%;">
-                                                    0% đạt mục tiêu
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                            <!-- This will contain multiple event cards -->
+                            <div id="activeEventsContainer" class="events-container">
+                                <!-- Events will be dynamically inserted here -->
                             </div>
-                            
-                            <div class="row mt-3">
-                                <div class="col-12">
-                                    <h6>Phân tích hiệu quả</h6>
-                                    <div class="card border-0 bg-light">
-                                        <div class="card-body">
-                                            <div id="eventEffectivenessAnalysis">
-                                                <p>Đang phân tích dữ liệu sự kiện...</p>
-                                            </div>
-                                            <h6 class="mt-3">
-                                                <i class="bi bi-person-badge me-2"></i>Khuyến Nghị Phân Bổ Nhân Viên
-                                            </h6>
-                                            <div id="staffEventRecommendations" class="recommendation-box">
-                                                <p>Đang phân tích để đưa ra khuyến nghị phân bổ nhân viên...</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <!-- No buttons here - removed the "Chi tiết phân tích" button -->
                         </div>
                         
                         <div id="noEventContent">
-                            <div class="text-center py-4">
-                                <i class="bi bi-calendar-x fs-1 text-muted"></i>
-                                <h5 class="mt-3">Không có sự kiện nào đang diễn ra</h5>
+                            <div class="text-center py-5 my-2">
+                                <i class="bi bi-calendar-x fs-1 text-secondary opacity-50"></i>
+                                <h5 class="mt-4 fw-bold">Không có sự kiện nào đang diễn ra</h5>
                                 <p class="text-muted">Thông tin sự kiện sẽ hiển thị tại đây khi có sự kiện diễn ra</p>
                                 <a href="admin.html" class="btn btn-outline-primary mt-2">
                                     <i class="bi bi-plus-circle me-2"></i>Tạo sự kiện mới
@@ -221,21 +216,19 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="card mb-4 shadow">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="bi bi-lightbulb me-2"></i>Khuyến Nghị
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="staffRecommendations" class="recommendation-box">
-                            <p>Đang phân tích để đưa ra khuyến nghị...</p>
+                        
+                        <!-- Thêm phần hiển thị khuyến nghị phân bổ nhân viên -->
+                        <hr>
+                        <h6 class="mb-3">
+                            <i class="bi bi-person-badge me-2"></i>Khuyến Nghị Phân Bổ Nhân Viên
+                        </h6>
+                        <div id="recommendations" class="recommendation-box bg-light p-2 rounded">
+                            <p>Đang phân tích để đưa ra khuyến nghị phân bổ nhân viên...</p>
                         </div>
                     </div>
                 </div>
+
+                <!-- Removed the redundant recommendation card that was here -->
             </div>
         </div>
     </div>

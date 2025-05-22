@@ -38,6 +38,24 @@ body {
     z-index: 10;
 }
 
+/* Event status styles */
+#eventStatus {
+    transition: all 0.3s ease;
+}
+
+#eventStatus.alert-success {
+    border-left: 5px solid var(--success-color);
+}
+
+#eventStatus.alert-info {
+    border-left: 5px solid var(--info-color);
+}
+
+#eventStatus.alert-warning {
+    border-left: 5px solid var(--warning-color);
+}
+
+/* Face detection box */
 .face-box.male {
     border-color: #1976d2;
 }
@@ -415,4 +433,452 @@ canvas {
 .spinner-border {
     width: 3rem;
     height: 3rem;
+}
+
+/* Gauge styles for system monitoring - improved */
+.gauge-container {
+    width: 150px;
+    height: 150px;
+    display: inline-block;
+    margin: 0 auto;
+    position: relative;
+}
+
+.gauge {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.gauge:before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 50%;
+    background: #f5f5f5;
+    border-radius: 150px 150px 0 0;
+    top: 0;
+    left: 0;
+}
+
+.gauge-fill {
+    position: absolute;
+    background: #2ecc71;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    clip-path: polygon(50% 50%, 50% 0%, 100% 0%, 100% 50%);
+    transform-origin: center center;
+    transform: rotate(0deg);
+    transition: transform 0.5s ease-out, background-color 0.5s;
+    z-index: 1;
+}
+
+.gauge-center {
+    position: absolute;
+    border-radius: 50%;
+    width: 75%;
+    height: 75%;
+    background: white;
+    top: 12.5%;
+    left: 12.5%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    z-index: 2;
+}
+
+.gauge-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #2ecc71;
+    margin-bottom: -5px;
+    line-height: 1.2;
+}
+
+.gauge-label {
+    font-size: 0.8rem;
+    color: #7f8c8d;
+    text-align: center;
+    margin-top: 4px;
+}
+
+/* Added for better gauge alignment */
+@media (max-width: 768px) {
+    .gauge-container {
+        margin-bottom: 20px;
+    }
+}
+
+/* Toast container style */
+#toastContainer {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+}
+
+/* Toast style */
+.toast {
+    margin-bottom: 10px;
+    min-width: 250px;
+}
+
+/* Improved button styles */
+.btn {
+    transition: all 0.2s;
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+/* Spinner animation for loading */
+@keyframes spinner {
+    to {transform: rotate(360deg);}
+}
+
+.bi-hourglass:before {
+    animation: spinner 1s linear infinite;
+    display: inline-block;
+}
+
+/* Login page styles */
+.login-page {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+}
+
+.login-card {
+    max-width: 450px;
+    margin: 0 auto;
+}
+
+.login-card .card {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.login-card .card-header {
+    border-bottom: none;
+}
+
+.login-card .form-control,
+.login-card .input-group-text,
+.login-card .btn {
+    border-radius: 5px;
+}
+
+.login-card .btn {
+    padding: 12px;
+}
+
+/* Login page styles */
+.login-page {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+}
+
+.login-card {
+    transition: all 0.3s ease;
+}
+
+.login-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.card-header.bg-primary {
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%) !important;
+}
+
+/* Add disabled button style to provide feedback */
+.btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Add animation for alerts */
+.alert {
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Add a loading indicator class */
+.loading-indicator {
+    position: relative;
+}
+
+.loading-indicator:after {
+    content: "";
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    width: 18px;
+    height: 18px;
+    margin-top: -9px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Event report styles */
+.recommendation-box {
+    background-color: #f8f9fa;
+    border-left: 4px solid #0d6efd;
+    padding: 15px;
+    margin-top: 10px;
+    border-radius: 4px;
+}
+
+.event-stats-card {
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.event-stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.event-progress {
+    height: 25px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.event-progress .progress-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: width 1s ease;
+    font-weight: 600;
+    color: white;
+}
+
+.event-target-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    margin: 2px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.event-effectiveness-rating {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+/* Event report target audience and gender styles */
+#eventTargetAudience, #eventTargetGender {
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.05);
+    display: inline-block;
+}
+
+/* Highlight different audience types with colors */
+.audience-young {
+    color: var(--success-color, #198754);
+}
+.audience-adult {
+    color: var(--info-color, #0dcaf0);
+}
+.audience-middle_aged {
+    color: var(--warning-color, #ffc107);
+}
+.audience-elderly {
+    color: var(--danger-color, #dc3545);
+}
+
+/* Target gender colors */
+.gender-male {
+    color: #1976d2;
+}
+.gender-female {
+    color: #d81b60;
+}
+.gender-all {
+    color: var(--dark-color, #212529);
+}
+
+/* Target visitor count highlight */
+#eventTargetVisitors {
+    color: var(--success-color);
+    font-size: 1.1em;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+/* Add animation when count changes */
+.target-count-display, .total-count-display {
+    position: relative;
+}
+
+.target-count-display:after, .total-count-display:after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: -5px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--success-color);
+    opacity: 0;
+}
+
+.count-updated .target-count-display:after,
+.count-updated .total-count-display:after {
+    animation: pulse-indicator 1s ease-out;
+}
+
+@keyframes pulse-indicator {
+    0% { opacity: 1; transform: scale(1); }
+    70% { opacity: 0.5; transform: scale(2); }
+    100% { opacity: 0; transform: scale(3); }
+}
+
+/* Target visitor count highlight */
+#eventTargetVisitors {
+    color: var(--success-color);
+    font-size: 1.1em;
+}
+
+/* Event Section Styling */
+.event-info-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.event-info-item i {
+    font-size: 1.2rem;
+    margin-top: 2px;
+}
+
+.pulse-animation {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+#eventStatus.alert-primary {
+    background-color: #f0f7ff;
+    color: #0a58ca;
+}
+
+/* Make event section responsive */
+@media (max-width: 767.98px) {
+    .event-info-item {
+        margin-bottom: 20px;
+    }
+}
+
+/* Events container for multiple events */
+.events-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.event-card {
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.event-card:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.event-badge-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+/* Make event section responsive */
+@media (max-width: 767.98px) {
+    .event-info-item {
+        margin-bottom: 20px;
+    }
+    
+    .events-container {
+        max-height: 600px;
+    }
+}
+
+/* Add styles for event card */
+.event-card {
+    padding: 1.25rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.08);
+    background: linear-gradient(135deg, #f8f9fa, #e2f0fb);
+    border-left: 4px solid #0d6efd;
+}
+
+.event-card strong {
+    color: #495057;
+}
+
+.event-card p {
+    margin-bottom: 0.5rem;
+}
+
+.event-card .badge {
+    font-size: 0.7rem;
+    padding: 0.35em 0.65em;
+}
+
+.pulse-animation {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+    100% {
+        opacity: 1;
+    }
 }

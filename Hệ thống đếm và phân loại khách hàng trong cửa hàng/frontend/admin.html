@@ -32,15 +32,13 @@
                             <i class="bi bi-person-circle me-1"></i><span id="currentUsername">Nhân viên</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li><a class="dropdown-item" href="#" id="userProfileLink"><i class="bi bi-person me-2"></i>Hồ sơ</a></li>
-                            <li><a class="dropdown-item" href="#" id="changePasswordLink" data-bs-toggle="modal" data-bs-target="#changePasswordModal"><i class="bi bi-key me-2"></i>Đổi mật khẩu</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#" id="logoutButton"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a></li>
+                            <li><a class="dropdown-item logout-button" href="#" id="logoutButton" onclick="window.performLogout(); return false;"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a></li>
                         </ul>
                     </li>
-                    <!-- Login button - Only shows when logged out -->
+                    <!-- Login link - Only shows when logged out -->
                     <li class="nav-item login-menu">
-                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">
+                        <a class="nav-link" href="login.html">
                             <i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập
                         </a>
                     </li>
@@ -97,6 +95,7 @@
                                         <th>Tên Sự Kiện</th>
                                         <th>Thời Gian</th>
                                         <th>Đối Tượng Mục Tiêu</th>
+                                        <th>Giới Tính Mục Tiêu</th>
                                         <th>Trạng Thái</th>
                                         <th>Số Lượng KH</th>
                                         <th>Hành Động</th>
@@ -108,6 +107,7 @@
                                         <td>Khuyến mãi cho người trẻ</td>
                                         <td>15/11/2023 - 20/11/2023</td>
                                         <td><span class="badge bg-success">Trẻ (0-20)</span></td>
+                                        <td><span class="badge bg-info">Nam</span></td>
                                         <td><span class="badge bg-primary">Đang diễn ra</span></td>
                                         <td>45 <small class="text-success">(87% đúng mục tiêu)</small></td>
                                         <td>
@@ -126,6 +126,7 @@
                                         <td>Giảm giá cho khách hàng cao tuổi</td>
                                         <td>25/11/2023 - 30/11/2023</td>
                                         <td><span class="badge bg-danger">Cao tuổi (60+)</span></td>
+                                        <td><span class="badge bg-secondary">Tất cả</span></td>
                                         <td><span class="badge bg-secondary">Sắp diễn ra</span></td>
                                         <td>0 <small class="text-muted">(chưa bắt đầu)</small></td>
                                         <td>
@@ -161,6 +162,7 @@
                                         <th>Tên Sự Kiện</th>
                                         <th>Thời Gian</th>
                                         <th>Đối Tượng Mục Tiêu</th>
+                                        <th>Giới Tính Mục Tiêu</th>
                                         <th>Tổng Khách</th>
                                         <th>% Đúng Mục Tiêu</th>
                                         <th>Đánh Giá</th>
@@ -172,6 +174,7 @@
                                         <td>Ngày hội gia đình</td>
                                         <td>01/11/2023 - 05/11/2023</td>
                                         <td><span class="badge bg-warning">Trung niên (41-60)</span></td>
+                                        <td><span class="badge bg-secondary">Tất cả</span></td>
                                         <td>120</td>
                                         <td>75%</td>
                                         <td><span class="badge bg-success">Thành công</span></td>
@@ -185,6 +188,7 @@
                                         <td>Khuyến mãi sinh viên</td>
                                         <td>15/10/2023 - 25/10/2023</td>
                                         <td><span class="badge bg-info">Thanh niên (21-40)</span></td>
+                                        <td><span class="badge bg-danger">Nữ</span></td>
                                         <td>85</td>
                                         <td>92%</td>
                                         <td><span class="badge bg-success">Thành công</span></td>
@@ -245,9 +249,10 @@
             <div class="tab-pane fade" id="settings" role="tabpanel">
                 <h3 class="mb-4">Cài Đặt Hệ Thống</h3>
                 
+                <!-- Camera Settings -->
                 <div class="card mb-4">
                     <div class="card-header">
-                        <h5 class="mb-0">Cài Đặt Camera</h5>
+                        <h5 class="mb-0"><i class="bi bi-camera-video me-2"></i>Cài Đặt Camera</h5>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
@@ -273,22 +278,25 @@
                             <input type="text" class="form-control" id="rtspUrl" placeholder="rtsp://username:password@ip:port/stream">
                         </div>
                         
-                        <button class="btn btn-primary" id="saveSettings">Lưu Cài Đặt</button>
+                        <button class="btn btn-primary" id="saveSettings">
+                            <i class="bi bi-save me-2"></i>Lưu Cài Đặt
+                        </button>
                     </div>
                 </div>
                 
+                <!-- System Settings -->
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-0">Cài Đặt Hệ Thống</h5>
+                        <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Cài Đặt Hệ Thống</h5>
                     </div>
                     <div class="card-body">
                         <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="checkbox" id="enableAutoRestart">
+                            <input class="form-check-input" type="checkbox" id="enableAutoRestart" checked>
                             <label class="form-check-label" for="enableAutoRestart">Tự Động Khởi Động Lại Khi Có Lỗi</label>
                         </div>
                         
                         <div class="form-check form-switch mb-3">
-                            <input class="form-check-input" type="checkbox" id="enableNotifications">
+                            <input class="form-check-input" type="checkbox" id="enableNotifications" checked>
                             <label class="form-check-label" for="enableNotifications">Thông Báo Khi Có Biến Động Lớn</label>
                         </div>
                         
@@ -296,14 +304,20 @@
                             <label class="form-label">Lưu Trữ Dữ Liệu</label>
                             <select class="form-select" id="dataRetention">
                                 <option value="7">7 ngày</option>
-                                <option value="30">30 ngày</option>
+                                <option value="30" selected>30 ngày</option>
                                 <option value="90">90 ngày</option>
                                 <option value="365">1 năm</option>
                             </select>
                         </div>
                         
-                        <button class="btn btn-primary" id="saveSystemSettings">Lưu Cài Đặt</button>
-                        <button class="btn btn-danger ms-2" id="resetSystem">Khôi Phục Mặc Định</button>
+                        <div class="d-flex">
+                            <button class="btn btn-primary" id="saveSystemSettings">
+                                <i class="bi bi-save me-2"></i>Lưu Cài Đặt
+                            </button>
+                            <button class="btn btn-danger ms-2" id="resetSystem">
+                                <i class="bi bi-arrow-repeat me-2"></i>Khôi Phục Mặc Định
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -319,15 +333,35 @@
                         <i class="bi bi-shield-lock text-primary" style="font-size: 4rem;"></i>
                         <h3 class="mt-4">Yêu cầu đăng nhập</h3>
                         <p class="text-muted">Bạn cần đăng nhập để truy cập trang quản trị hệ thống</p>
-                        <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#loginModal">
+                        <a href="login.html" class="btn btn-primary mt-3">
                             <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập
-                        </button>
-                        <p class="mt-3 small">Chưa có tài khoản? <a href="#" data-bs-toggle="modal" data-bs-target="#registerModal">Đăng ký</a></p>
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    
+    <!-- Remove Registration Modal -->
+
+    <!-- Emergency login button - appears when logout fails -->
+    <div id="emergencyLogout" style="position: fixed; bottom: 20px; right: 20px; display: none;">
+        <button onclick="emergencyLogout()" class="btn btn-danger">
+            <i class="bi bi-exclamation-triangle"></i> Đăng xuất khẩn cấp
+        </button>
+    </div>
+    
+    <script>
+        function emergencyLogout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+        
+        // Show emergency logout button after 60 seconds
+        setTimeout(() => {
+            document.getElementById('emergencyLogout').style.display = 'block';
+        }, 60000);
+    </script>
 
     <!-- Add Staff Modal -->
     <div class="modal fade" id="addStaffModal" tabindex="-1">
@@ -374,6 +408,57 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                     <button type="button" class="btn btn-primary" id="submitAddStaff">Thêm Nhân Viên</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Edit Staff Modal -->
+    <div class="modal fade" id="editStaffModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Chỉnh Sửa Thông Tin Nhân Viên</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editStaffForm">
+                        <input type="hidden" id="editStaffId">
+                        <div class="mb-3">
+                            <label for="editStaffName" class="form-label">Tên Nhân Viên</label>
+                            <input type="text" class="form-control" id="editStaffName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editStaffAge" class="form-label">Tuổi</label>
+                            <input type="number" class="form-control" id="editStaffAge" min="18" max="65" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Giới Tính</label>
+                            <div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="editStaffGender" id="editGenderMale" value="male" checked>
+                                    <label class="form-check-label" for="editGenderMale">Nam</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="editStaffGender" id="editGenderFemale" value="female">
+                                    <label class="form-check-label" for="editGenderFemale">Nữ</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editStaffExperience" class="form-label">Mức Kinh Nghiệm</label>
+                            <select class="form-select" id="editStaffExperience" required>
+                                <option value="">Chọn mức kinh nghiệm</option>
+                                <option value="junior">Nhân viên mới (0-2 năm)</option>
+                                <option value="intermediate">Trung cấp (2-5 năm)</option>
+                                <option value="senior">Cao cấp (5+ năm)</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" id="submitEditStaff">Cập Nhật</button>
                 </div>
             </div>
         </div>
@@ -486,7 +571,7 @@
                             <label for="successThreshold" class="form-label">Ngưỡng Đánh Giá Thành Công (% khách đúng mục tiêu)</label>
                             <input type="range" class="form-range" id="successThreshold" min="50" max="100" value="75">
                             <div class="d-flex justify-content-between">
-                                <small>50%</small>
+                                <small>50%</</small>
                                 <small id="thresholdValue">75%</small>
                                 <small>100%</small>
                             </div>
@@ -496,6 +581,129 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                     <button type="button" class="btn btn-primary" id="submitAddEvent">Tạo Sự Kiện</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Event Modal -->
+    <div class="modal fade" id="editEventModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Chỉnh Sửa Sự Kiện</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editEventForm">
+                        <input type="hidden" id="editEventId">
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <label for="editEventName" class="form-label">Tên Sự Kiện</label>
+                                <input type="text" class="form-control" id="editEventName" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editEventType" class="form-label">Loại Sự Kiện</label>
+                                <select class="form-select" id="editEventType" required>
+                                    <option value="">Chọn loại</option>
+                                    <option value="promotion">Khuyến mãi</option>
+                                    <option value="sale">Giảm giá</option>
+                                    <option value="product_launch">Ra mắt sản phẩm</option>
+                                    <option value="customer_day">Ngày hội khách hàng</option>
+                                    <option value="other">Khác</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="editEventStartDate" class="form-label">Ngày Bắt Đầu</label>
+                                <input type="datetime-local" class="form-control" id="editEventStartDate" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editEventEndDate" class="form-label">Ngày Kết Thúc</label>
+                                <input type="datetime-local" class="form-control" id="editEventEndDate" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Nhóm Khách Hàng Mục Tiêu</label>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="editTargetYoung" name="editTargetAudience" value="young">
+                                        <label class="form-check-label" for="editTargetYoung">
+                                            Trẻ (0-20)
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="editTargetAdult" name="editTargetAudience" value="adult">
+                                        <label class="form-check-label" for="editTargetAdult">
+                                            Thanh niên (21-40)
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="editTargetMiddleAged" name="editTargetAudience" value="middle_aged">
+                                        <label class="form-check-label" for="editTargetMiddleAged">
+                                            Trung niên (41-60)
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="editTargetElderly" name="editTargetAudience" value="elderly">
+                                        <label class="form-check-label" for="editTargetElderly">
+                                            Cao tuổi (60+)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Giới Tính Mục Tiêu</label>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="editTargetGender" id="editTargetAll" value="all" checked>
+                                <label class="form-check-label" for="editTargetAll">Tất cả</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="editTargetGender" id="editTargetMale" value="male">
+                                <label class="form-check-label" for="editTargetMale">Nam</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="editTargetGender" id="editTargetFemale" value="female">
+                                <label class="form-check-label" for="editTargetFemale">Nữ</label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editEventDescription" class="form-label">Mô Tả Sự Kiện</label>
+                            <textarea class="form-control" id="editEventDescription" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editEventTarget" class="form-label">Mục Tiêu Số Lượng Khách Hàng</label>
+                            <input type="number" class="form-control" id="editEventTarget" min="1">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editSuccessThreshold" class="form-label">Ngưỡng Đánh Giá Thành Công (% khách đúng mục tiêu)</label>
+                            <input type="range" class="form-range" id="editSuccessThreshold" min="50" max="100" value="75">
+                            <div class="d-flex justify-content-between">
+                                <small>50%</</small>
+                                <small id="editThresholdValue">75%</small>
+                                <small>100%</small>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" id="submitEditEvent" onclick="submitEditEvent()">Cập Nhật Sự Kiện</button>
                 </div>
             </div>
         </div>
@@ -519,197 +727,6 @@
                     <button type="button" class="btn btn-primary" id="downloadReport">
                         <i class="bi bi-download"></i> Tải Báo Cáo
                     </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Login Modal -->
-    <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Đăng nhập</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-danger" id="loginError" style="display: none;"></div>
-                    <form id="loginForm">
-                        <div class="mb-3">
-                            <label for="loginUsername" class="form-label">Tên đăng nhập</label>
-                            <input type="text" class="form-control" id="loginUsername" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="loginPassword" class="form-label">Mật khẩu</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" id="loginPassword" required>
-                                <button class="btn btn-outline-secondary toggle-password" type="button" tabindex="-1">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="rememberMe">
-                            <label class="form-check-label" for="rememberMe">Ghi nhớ đăng nhập</label>
-                        </div>
-                    </form>
-                    <div class="text-center mb-3">
-                        <p>Chưa có tài khoản? <a href="#" data-bs-toggle="modal" data-bs-target="#registerModal" data-bs-dismiss="modal">Đăng ký</a></p>
-                        <p><a href="#" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal" data-bs-dismiss="modal">Quên mật khẩu?</a></p>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="button" class="btn btn-primary" id="loginButton">Đăng nhập</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Registration Modal -->
-    <div class="modal fade" id="registerModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Đăng ký tài khoản</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-danger" id="registerError" style="display: none;"></div>
-                    <form id="registerForm">
-                        <div class="mb-3">
-                            <label for="regFullName" class="form-label">Họ và tên</label>
-                            <input type="text" class="form-control" id="regFullName" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="regUsername" class="form-label">Tên đăng nhập</label>
-                            <input type="text" class="form-control" id="regUsername" required>
-                            <div class="form-text">Tên đăng nhập phải có ít nhất 5 ký tự và không có ký tự đặc biệt.</div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="regEmail" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="regEmail" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="regPassword" class="form-label">Mật khẩu</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" id="regPassword" required>
-                                <button class="btn btn-outline-secondary toggle-password" type="button" tabindex="-1">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                            </div>
-                            <div class="form-text">Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số.</div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="regConfirmPassword" class="form-label">Xác nhận mật khẩu</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" id="regConfirmPassword" required>
-                                <button class="btn btn-outline-secondary toggle-password" type="button" tabindex="-1">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="regPosition" class="form-label">Vị trí công việc</label>
-                            <select class="form-select" id="regPosition" required>
-                                <option value="">Chọn vị trí</option>
-                                <option value="staff">Nhân viên</option>
-                                <option value="manager">Quản lý</option>
-                                <option value="admin">Quản trị viên</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="regSecretCode" class="form-label">Mã xác nhận</label>
-                            <input type="text" class="form-control" id="regSecretCode" required>
-                            <div class="form-text">Liên hệ quản trị viên để nhận mã xác nhận đăng ký.</div>
-                        </div>
-                    </form>
-                    <div class="text-center mb-3">
-                        <p>Đã có tài khoản? <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal" data-bs-dismiss="modal">Đăng nhập</a></p>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="button" class="btn btn-primary" id="registerButton">Đăng ký</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Forgot Password Modal -->
-    <div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Khôi phục mật khẩu</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-info">
-                        Vui lòng nhập email đã đăng ký. Chúng tôi sẽ gửi link khôi phục mật khẩu qua email của bạn.
-                    </div>
-                    <div class="alert alert-danger" id="forgotPasswordError" style="display: none;"></div>
-                    <div class="alert alert-success" id="forgotPasswordSuccess" style="display: none;"></div>
-                    <form id="forgotPasswordForm">
-                        <div class="mb-3">
-                            <label for="resetEmail" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="resetEmail" required>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                    <button type="button" class="btn btn-primary" id="sendResetLinkButton">Gửi link khôi phục</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Change Password Modal -->
-    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Đổi mật khẩu</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-danger" id="changePasswordError" style="display: none;"></div>
-                    <div class="alert alert-success" id="changePasswordSuccess" style="display: none;"></div>
-                    <form id="changePasswordForm">
-                        <div class="mb-3">
-                            <label for="currentPassword" class="form-label">Mật khẩu hiện tại</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" id="currentPassword" required>
-                                <button class="btn btn-outline-secondary toggle-password" type="button" tabindex="-1">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="newPassword" class="form-label">Mật khẩu mới</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" id="newPassword" required>
-                                <button class="btn btn-outline-secondary toggle-password" type="button" tabindex="-1">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                            </div>
-                            <div class="form-text">Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số.</div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="confirmNewPassword" class="form-label">Xác nhận mật khẩu mới</label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" id="confirmNewPassword" required>
-                                <button class="btn btn-outline-secondary toggle-password" type="button" tabindex="-1">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="button" class="btn btn-primary" id="changePasswordButton">Cập nhật mật khẩu</button>
                 </div>
             </div>
         </div>
@@ -914,6 +931,14 @@
                 const errorElement = document.getElementById(elementId);
                 errorElement.textContent = message;
                 errorElement.style.display = 'block';
+            }
+
+            // Add threshold value update for edit form
+            const editThresholdSlider = document.getElementById('editSuccessThreshold');
+            if (editThresholdSlider) {
+                editThresholdSlider.addEventListener('input', function() {
+                    document.getElementById('editThresholdValue').textContent = `${this.value}%`;
+                });
             }
         });
     </script>

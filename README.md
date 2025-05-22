@@ -42,5 +42,6 @@ Hệ thống giúp đếm và phân loại khách hàng trong cửa hàng sử d
 - Sao lưu và khôi phục dữ liệu tự động
 
 ### Đăng nhập
-- Tài khoản mặc định: admin / admin123
-- Mã xác nhận để đăng ký người dùng mới: ADMIN123
+- Sử dụng mã truy cập: `ADMIN` hoặc `NHANVIEN`
+- Vai trò ADMIN: Truy cập toàn bộ hệ thống (cả trang chính và trang quản trị)
+- Vai trò NHANVIEN: Chỉ truy cập trang chính

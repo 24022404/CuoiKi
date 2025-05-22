@@ -2,7 +2,7 @@
 # hello
 # hello
 # hello
-from flask import Flask, Response, jsonify, request, send_from_directory
+from flask import Flask, Response, jsonify, request, send_from_directory, make_response
 from flask_cors import CORS
 import cv2
 import numpy as np
@@ -75,26 +75,86 @@ def classify_age(age):
     else:
         return "elderly"
 
-def initialize_camera():
-    """Initialize camera connection with optimal settings"""
+def initialize_camera(camera_source=0, rtsp_url=None, resolution='hd', reconnect_attempts=3):
+    """Initialize camera connection with optimal settings
+    
+    Args:
+        camera_source: Camera index (0=default, 1=external) or path to video file
+        rtsp_url: URL for RTSP/HTTP stream (overrides camera_source if provided)
+        resolution: Desired resolution: 'low', 'medium', 'hd', 'full-hd'
+        reconnect_attempts: Number of reconnection attempts before giving up
+        
+    Returns:
+        bool: True if camera was initialized successfully, False otherwise
+    """
     global video_capture
     
-    # Try to connect to the default camera
-    video_capture = cv2.VideoCapture(0)  # 0 is usually the built-in webcam
+    # Define resolution presets
+    resolutions = {
+        'low': (640, 360),      # Low: 360p
+        'medium': (854, 480),   # Medium: 480p
+        'hd': (1280, 720),      # HD: 720p
+        'full-hd': (1920, 1080) # Full HD: 1080p
+    }
     
-    # Check if camera opened successfully
-    if not video_capture.isOpened():
-        print("Failed to open camera")
-        return False
+    # Use specified resolution or default to medium
+    width, height = resolutions.get(resolution, resolutions['medium'])
     
-    # Set optimal camera properties for smoother frames
-    # Use a wider resolution to fill the screen horizontally (16:9 aspect ratio)
-    video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, 854)
-    video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-    video_capture.set(cv2.CAP_PROP_FPS, 30)  # Request 30 FPS if camera supports it
-    video_capture.set(cv2.CAP_PROP_BUFFERSIZE, 3)  # Use small buffer for less latency
+    # Log initialization attempt
+    if (rtsp_url):
+        print(f"Attempting to connect to stream: {rtsp_url}")
+        source = rtsp_url
+    else:
+        print(f"Attempting to connect to camera source: {camera_source}")
+        source = camera_source
     
-    return True
+    # Try to connect with multiple attempts
+    for attempt in range(reconnect_attempts):
+        try:
+            # Release previous capture if it exists
+            if video_capture is not None:
+                video_capture.release()
+            
+            # Initialize the camera
+            video_capture = cv2.VideoCapture(source)
+            
+            # Check if camera opened successfully
+            if not video_capture.isOpened():
+                print(f"Failed to open camera (attempt {attempt+1}/{reconnect_attempts})")
+                time.sleep(1)
+                continue
+            
+            # Set optimal camera properties for smoother frames
+            video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+            video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+            video_capture.set(cv2.CAP_PROP_FPS, 30)  # Request 30 FPS if camera supports it
+            video_capture.set(cv2.CAP_PROP_BUFFERSIZE, 3)  # Use small buffer for less latency
+            
+            # Read test frame to confirm connection
+            ret, test_frame = video_capture.read()
+            if not ret or test_frame is None:
+                print(f"Camera connection established but couldn't read frame (attempt {attempt+1}/{reconnect_attempts})")
+                time.sleep(1)
+                continue
+                
+            # Check actual camera properties
+            actual_width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+            actual_height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            actual_fps = int(video_capture.get(cv2.CAP_PROP_FPS))
+            
+            print(f"Camera connected successfully:")
+            print(f"  - Resolution: {actual_width}x{actual_height} (requested: {width}x{height})")
+            print(f"  - FPS: {actual_fps}")
+            print(f"  - Frame size: {test_frame.shape}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error connecting to camera (attempt {attempt+1}/{reconnect_attempts}): {e}")
+            time.sleep(1)
+    
+    print(f"Failed to initialize camera after {reconnect_attempts} attempts")
+    return False
 
 def preload_deepface_models():
     """Pre-load and cache all DeepFace models for faster analysis"""
@@ -886,59 +946,77 @@ def get_returning_customers():
     })
 
 # Authentication routes
-@app.route('/auth/login', methods=['POST'])
+@app.route('/auth/login', methods=['POST', 'OPTIONS'])
 def login():
-    """Handle user login"""
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
-    
-    if not username or not password:
+    """Handle user login with access code"""
+    # Handle CORS preflight requests
+    if request.method == 'OPTIONS':
+        response = make_response()
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+        response.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+        return response
+        
+    try:
+        data = request.json
+        
+        # Check if data is valid JSON
+        if not data:
+            print("Login error: Invalid JSON data received")
+            return jsonify({
+                "success": False,
+                "message": "Invalid request format. Please provide valid JSON."
+            }), 400
+        
+        access_code = data.get('access_code', '').strip()
+        
+        if not access_code:
+            print("Login error: No access code provided")
+            return jsonify({
+                "success": False,
+                "message": "Access code is required. Use 'ADMIN' or 'NHANVIEN'."
+            }), 400
+        
+        print(f"Login attempt with access code: {access_code}")
+        
+        # Authenticate user with access code
+        auth_result = db.authenticate_user(access_code)
+        
+        if auth_result:
+            print(f"Login successful for role: {auth_result['user']['role']}")
+            
+            # Create a response with proper CORS headers
+            response = jsonify({
+                "success": True,
+                "message": "Login successful",
+                "token": auth_result['token'],
+                "user": auth_result['user']
+            })
+            
+            # Add CORS headers
+            response.headers.add("Access-Control-Allow-Origin", "*")
+            return response
+        else:
+            print(f"Login failed with access code: {access_code}")
+            return jsonify({
+                "success": False,
+                "message": "Invalid access code. Please use exactly 'ADMIN' or 'NHANVIEN'."
+            }), 401
+    except Exception as e:
+        print(f"Login exception: {str(e)}")
+        print(f"Exception details: {traceback.format_exc()}")
         return jsonify({
             "success": False,
-            "message": "Username and password are required"
-        }), 400
-    
-    # Authenticate user
-    auth_result = db.authenticate_user(username, password)
-    
-    if auth_result:
-        return jsonify({
-            "success": True,
-            "message": "Login successful",
-            "token": auth_result['token'],
-            "user": auth_result['user']
-        })
-    else:
-        return jsonify({
-            "success": False,
-            "message": "Invalid username or password"
-        }), 401
+            "message": "An error occurred during login. Please try again."
+        }), 500
 
 @app.route('/auth/register', methods=['POST'])
 def register():
-    """Handle user registration"""
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
-    full_name = data.get('full_name')
-    email = data.get('email')
-    role = data.get('position', 'staff')  # Default to staff if not specified
-    secret_code = data.get('secret_code')
-    
-    if not all([username, password, full_name, email, secret_code]):
-        return jsonify({
-            "success": False,
-            "message": "All fields are required"
-        }), 400
-    
-    # Register user
-    result = db.register_user(username, password, full_name, email, role, secret_code)
-    
-    if result["success"]:
-        return jsonify(result)
-    else:
-        return jsonify(result), 400
+    """Registration is disabled"""
+    return jsonify({
+        "success": False,
+        "message": "Registration is disabled, please use access codes ADMIN or NHANVIEN to login"
+    }), 400
 
 @app.route('/auth/users', methods=['GET'])
 def get_users():
@@ -963,16 +1041,42 @@ def add_employee():
             "message": "All fields are required"
         }), 400
     
+    # Convert age to integer
+    try:
+        age = int(age)
+    except (ValueError, TypeError):
+        return jsonify({
+            "success": False,
+            "message": "Age must be a number"
+        }), 400
+    
     result = db.add_staff(name, age, gender, experience_level)
     return jsonify(result)
 
 @app.route('/api/employees', methods=['GET'])
 def get_employees():
     """Get all staff members"""
-    staff = db.get_all_staff()
-    return jsonify(staff)
+    try:
+        # Add CORS headers to this response
+        response = make_response(jsonify(db.get_all_staff()))
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+        response.headers.add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+        return response
+    except Exception as e:
+        print(f"Error getting staff: {e}")
+        return jsonify({"error": str(e)}), 500
 
-@app.route('/api/employees/<int:staff_id>', methods=['DELETE'])
+# Add missing route for updating staff
+@app.route('/api/employees/<staff_id>', methods=['PUT'])
+def update_employee(staff_id):
+    """Update a staff member"""
+    data = request.json
+    result = db.update_staff(staff_id, data)
+    return jsonify(result)
+
+# Fix route parameter to use string instead of int
+@app.route('/api/employees/<staff_id>', methods=['DELETE'])
 def delete_employee(staff_id):
     """Delete a staff member"""
     result = db.delete_staff(staff_id)
@@ -1338,6 +1442,223 @@ def main():
         # Ensure analysis process is terminated when Flask exits
         if 'control_dict' in globals() and control_dict is not None:
             stop_analysis_process(control_dict)
+
+# Event management routes
+@app.route('/api/events', methods=['GET', 'OPTIONS'])
+def get_events():
+    """Get all events"""
+    if request.method == 'OPTIONS':
+        # Handle CORS preflight request
+        return _build_cors_preflight_response()
+    
+    try:
+        events = db.get_all_events()
+        return jsonify(events)
+    except Exception as e:
+        print(f"Error getting events: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+# Make sure this route is correctly implemented and returns active events
+@app.route('/api/events/active', methods=['GET', 'OPTIONS'])
+def get_active_events():
+    """Get currently active events"""
+    if request.method == 'OPTIONS':
+        # Handle CORS preflight request
+        return _build_cors_preflight_response()
+    
+    try:
+        # Get all events
+        all_events = db.get_all_events()
+        
+        # Filter for active events only
+        active_events = [event for event in all_events if event.get('status') == 'active']
+        
+        # Log the number of active events found (for debugging)
+        print(f"Found {len(active_events)} active events")
+        
+        # Return the active events
+        return jsonify(active_events)
+    except Exception as e:
+        print(f"Error getting active events: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/events', methods=['POST', 'OPTIONS'])
+def create_event():
+    """Create a new event"""
+    if request.method == 'OPTIONS':
+        # Handle CORS preflight request
+        return _build_cors_preflight_response()
+    
+    try:
+        data = request.json
+        result = db.create_event(
+            name=data.get('name'),
+            event_type=data.get('type'),
+            start_date=data.get('start_date'),
+            end_date=data.get('end_date'),
+            target_audience=data.get('target_audience', []),
+            target_gender=data.get('target_gender'),
+            description=data.get('description', ''),
+            target_count=int(data.get('target_count', 0)),
+            success_threshold=int(data.get('success_threshold', 75))
+        )
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error creating event: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/events/<event_id>', methods=['PUT', 'OPTIONS'])
+def update_event(event_id):
+    """Update an event"""
+    if request.method == 'OPTIONS':
+        # Handle CORS preflight request
+        return _build_cors_preflight_response()
+    
+    try:
+        data = request.json
+        # Use the new comprehensive update_event function
+        result = db.update_event(event_id=event_id, data=data)
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error updating event: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/events/<event_id>', methods=['DELETE', 'OPTIONS'])
+def delete_event_route(event_id):
+    """Delete an event"""
+    if request.method == 'OPTIONS':
+        # Handle CORS preflight request
+        return _build_cors_preflight_response()
+    
+    try:
+        result = db.delete_event(event_id)
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error deleting event: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/events/<event_id>', methods=['GET', 'OPTIONS'])
+def get_event(event_id):
+    """Get a specific event"""
+    if request.method == 'OPTIONS':
+        # Handle CORS preflight request
+        return _build_cors_preflight_response()
+    
+    try:
+        # Get all events and find the specific one
+        all_events = db.get_all_events()
+        event = next((e for e in all_events if e['id'] == event_id), None)
+        
+        if event:
+            return jsonify(event)
+        else:
+            return jsonify({"success": False, "message": "Event not found"}), 404
+    except Exception as e:
+        print(f"Error getting event: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/events/<event_id>/stats', methods=['POST', 'OPTIONS'])
+def update_event_statistics(event_id):
+    """Update event statistics with visitor count and target match percentage"""
+    if request.method == 'OPTIONS':
+        # Handle CORS preflight request
+        return _build_cors_preflight_response()
+    
+    try:
+        data = request.json
+        visitor_count = data.get('visitor_count', 0)
+        target_match_percent = data.get('target_match_percent', 0)
+        
+        result = db.update_event_stats(event_id, visitor_count, target_match_percent)
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error updating event statistics: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+# Helper function for CORS preflight responses
+def _build_cors_preflight_response():
+    response = make_response()
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+    response.headers.add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+    return response
+
+# Settings management routes
+@app.route('/api/settings/<settings_type>', methods=['GET', 'OPTIONS'])
+def get_settings_api(settings_type):
+    """Get application settings"""
+    if request.method == 'OPTIONS':
+        return _build_cors_preflight_response()
+    
+    if settings_type not in ['camera', 'system', 'ai']:
+        return jsonify({"success": False, "message": "Invalid settings type"}), 400
+    
+    settings = db.get_settings(settings_type)
+    return jsonify({"success": True, "data": settings})
+
+@app.route('/api/settings/<settings_type>', methods=['POST', 'OPTIONS'])
+def save_settings_api(settings_type):
+    """Save application settings"""
+    if request.method == 'OPTIONS':
+        return _build_cors_preflight_response()
+    
+    if settings_type not in ['camera', 'system', 'ai']:
+        return jsonify({"success": False, "message": "Invalid settings type"}), 400
+    
+    data = request.json
+    result = db.save_settings(settings_type, data)
+    
+    # Apply camera settings if needed
+    if settings_type == 'camera' and result['success']:
+        try:
+            # Update camera settings
+            if 'camera_source' in data:
+                # Only reinitialize camera if source changed
+                current_settings = db.get_settings('camera')
+                if current_settings.get('camera_source') != data.get('camera_source') or \
+                   current_settings.get('rtsp_url') != data.get('rtsp_url'):
+                    # Use RTSP URL if provided, otherwise use camera source
+                    if data.get('rtsp_url'):
+                        initialize_camera(rtsp_url=data.get('rtsp_url'), 
+                                         resolution=data.get('resolution', 'hd'))
+                    else:
+                        initialize_camera(camera_source=int(data.get('camera_source', 0)),
+                                         resolution=data.get('resolution', 'hd'))
+        except Exception as e:
+            print(f"Error applying camera settings: {e}")
+            # Don't fail the API call if camera initialization fails
+    
+    return jsonify(result)
+
+@app.route('/api/settings/reset', methods=['POST', 'OPTIONS'])
+def reset_settings_api():
+    """Reset settings to defaults"""
+    if request.method == 'OPTIONS':
+        return _build_cors_preflight_response()
+    
+    data = request.json
+    settings_type = data.get('type', None)  # Optional setting type to reset
+    
+    result = db.reset_settings(settings_type)
+    return jsonify(result)
+
+# System stats endpoint
+@app.route('/api/system/stats', methods=['GET'])
+def system_stats():
+    """Get system statistics"""
+    try:
+        # Use interval=1 to get meaningful CPU values on first call
+        stats = {
+            "cpu_usage": psutil.cpu_percent(interval=0.5),
+            "memory_usage": psutil.virtual_memory().percent,
+            "disk_usage": psutil.disk_usage('/').percent,
+            "uptime_seconds": int(time.time() - psutil.boot_time()),
+            "timestamp": datetime.datetime.now().isoformat()
+        }
+        return jsonify({"success": True, "data": stats})
+    except Exception as e:
+        print(f"Error getting system stats: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
 
 if __name__ == '__main__':
     main()

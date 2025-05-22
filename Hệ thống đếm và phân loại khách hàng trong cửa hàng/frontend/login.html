@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập - Hệ Thống Đếm và Phân Loại Khách Hàng</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="login-page">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="login-card mt-5">
+                    <div class="card shadow">
+                        <div class="card-header bg-primary text-white text-center p-4">
+                            <h4 class="mb-0">
+                                <i class="bi bi-people-fill me-2"></i>Hệ Thống Đếm Khách Hàng
+                            </h4>
+                        </div>
+                        <div class="card-body p-4">
+                            <h5 class="card-title text-center mb-4">Đăng Nhập Hệ Thống</h5>
+                            
+                            <div class="alert alert-danger" id="loginError" style="display: none;"></div>
+                            
+                            <form id="loginForm">
+                                <div class="mb-4">
+                                    <label for="accessCode" class="form-label">Mã truy cập</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-key"></i></span>
+                                        <input type="text" class="form-control" id="accessCode" placeholder="Nhập mã truy cập" required>
+                                    </div>
+                                    <div class="form-text mt-2">
+                                        Sử dụng chính xác mã <code>ADMIN</code> để đăng nhập với tư cách quản trị viên<br>
+                                        Sử dụng chính xác mã <code>NHANVIEN</code> để đăng nhập với tư cách nhân viên<br>
+                                        <small>(Lưu ý: mã phải viết hoa chính xác như trên)</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button type="button" class="btn btn-primary btn-lg" id="loginButton">
+                                        <i class="bi bi-box-arrow-in-right me-2"></i>Đăng Nhập
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="card-footer text-center py-3">
+                            <p class="mb-0">&copy; 2025 Hệ Thống Đếm và Phân Loại Khách Hàng</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is already logged in - more comprehensive check
+            const checkExistingLogin = () => {
+                const token = localStorage.getItem('adminToken');
+                const role = localStorage.getItem('userRole');
+                
+                console.log("Login page - checking existing login:", { 
+                    hasToken: !!token, 
+                    role: role || "none" 
+                });
+                
+                if (token && role) {
+                    console.log("Already logged in, redirecting...");
+                    // Redirect to appropriate page based on role
+                    if (role === 'admin') {
+                        window.location.href = 'admin.html';
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                    return true;
+                }
+                return false;
+            };
+            
+            // Try to check login with retry
+            const checkWithRetry = async () => {
+                for (let attempt = 0; attempt < 2; attempt++) {
+                    if (checkExistingLogin()) return true;
+                    // Wait before retrying
+                    if (attempt < 1) await new Promise(resolve => setTimeout(resolve, 300));
+                }
+                return false;
+            };
+            
+            // Execute check
+            checkWithRetry();
+            
+            // Handle login button click with improved reliability
+            document.getElementById('loginButton').addEventListener('click', async function() {
+                // Disable the button to prevent multiple clicks
+                this.disabled = true;
+                
+                const accessCode = document.getElementById('accessCode').value;
+                
+                if (!accessCode) {
+                    showError('Vui lòng nhập mã truy cập.');
+                    this.disabled = false;
+                    return;
+                }
+                
+                // Show loading indicator
+                const originalButtonText = this.innerHTML;
+                this.innerHTML = '<i class="bi bi-hourglass"></i> Đang đăng nhập...';
+                
+                try {
+                    // Test connection first
+                    try {
+                        const testConnection = await fetch(`${apiService.baseUrl}/camera_status`, { 
+                            method: 'GET',
+                            mode: 'cors',
+                            headers: { 'Content-Type': 'application/json' }
+                        });
+                        
+                        // If test failed, show a specific network error
+                        if (!testConnection.ok) {
+                            throw new Error('Network connection test failed');
+                        }
+                    } catch (networkError) {
+                        console.error('Connection test failed:', networkError);
+                        showError('Không thể kết nối với máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.');
+                        this.disabled = false;
+                        this.innerHTML = originalButtonText;
+                        return;
+                    }
+                    
+                    // Clear any existing auth data first
+                    try {
+                        localStorage.removeItem('adminToken');
+                        localStorage.removeItem('adminUsername');
+                        localStorage.removeItem('userRole');
+                    } catch (storageError) {
+                        console.warn('Could not clear localStorage, continuing anyway:', storageError);
+                    }
+                    
+                    // Wait a moment to ensure storage is cleared
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    
+                    // Attempt login
+                    const response = await apiService.login(accessCode);
+                    
+                    if (response.success) {
+                        // Show success message
+                        const successMessage = document.createElement('div');
+                        successMessage.className = 'alert alert-success';
+                        successMessage.textContent = 'Đăng nhập thành công! Đang chuyển hướng...';
+                        document.querySelector('.card-body').prepend(successMessage);
+                        
+                        // Verify login was successful by checking localStorage again
+                        await new Promise(resolve => setTimeout(resolve, 500)); // Wait for localStorage to update
+                        
+                        const token = localStorage.getItem('adminToken');
+                        const role = localStorage.getItem('userRole');
+                        
+                        console.log("Verifying login success:", { 
+                            hasToken: !!token, 
+                            role: role || "none" 
+                        });
+                        
+                        if (!token || !role) {
+                            // Something went wrong with setting localStorage - try to read from cookies as fallback
+                            const cookieToken = document.cookie
+                                .split('; ')
+                                .find(row => row.startsWith('adminToken='))
+                                ?.split('=')[1];
+                                
+                            const cookieRole = document.cookie
+                                .split('; ')
+                                .find(row => row.startsWith('userRole='))
+                                ?.split('=')[1];
+                                
+                            if (cookieToken && cookieRole) {
+                                console.log("Using cookie fallback for authentication");
+                                // Continue with the process using cookies instead of localStorage
+                            } else {
+                                console.error("Login appeared successful but could not verify tokens");
+                                showError('Đăng nhập không hoàn tất. Vui lòng thử lại hoặc sử dụng trình duyệt khác.');
+                                this.disabled = false;
+                                this.innerHTML = originalButtonText;
+                                return;
+                            }
+                        }
+                        
+                        // Add a delay before redirecting to ensure localStorage is set properly
+                        setTimeout(() => {
+                            // Give admin users a choice of where to go
+                            if (response.user.role === 'admin') {
+                                if (confirm('Đăng nhập thành công! Bạn muốn đi đến trang quản trị ngay bây giờ không?\nNhấn "OK" để đi đến trang quản trị, nhấn "Cancel" để đi đến trang chính.')) {
+                                    window.location.href = 'admin.html';
+                                } else {
+                                    window.location.href = 'index.html';
+                                }
+                            } else {
+                                window.location.href = 'index.html';
+                            }
+                        }, 1500); // Increased delay to 1.5 seconds
+                    } else {
+                        showError(response.message || 'Đăng nhập thất bại');
+                        this.disabled = false;
+                        this.innerHTML = originalButtonText;
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    showError('Đã xảy ra lỗi khi đăng nhập. Vui lòng thử lại.');
+                    this.disabled = false;
+                    this.innerHTML = originalButtonText;
+                }
+            });
+            
+            // Handle Enter key press in the access code input
+            document.getElementById('accessCode').addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    document.getElementById('loginButton').click();
+                }
+            });
+            
+            // Function to show error message
+            function showError(message) {
+                const errorElement = document.getElementById('loginError');
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

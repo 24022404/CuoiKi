@@ -1,46 +1,28 @@
+// hello
+// hello
+// hello
 document.addEventListener('DOMContentLoaded', function() {
-    // Check if user is logged in
-    checkLoginStatus();
+    // Check if user is logged in and is admin
+    const isAdmin = checkLoginStatus();
+    if (!isAdmin) {
+        // If not logged in or not admin, redirect to login page
+        window.location.href = 'login.html';
+        return;
+    }
     
     // Khởi tạo các biểu đồ và dữ liệu
     initCharts();
     loadAnalyticsData();
     loadStaffData();
-    
-    // Xử lý đăng nhập
-    document.getElementById('loginButton').addEventListener('click', async function() {
-        const username = document.getElementById('loginUsername').value;
-        const password = document.getElementById('loginPassword').value;
-        
-        if (!username || !password) {
-            showError('loginError', 'Vui lòng nhập đầy đủ thông tin đăng nhập.');
-            return;
-        }
-        
-        const response = await apiService.login(username, password);
-        
-        if (response.success) {
-            // Đóng modal và cập nhật UI
-            const loginModal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
-            loginModal.hide();
-            
-            checkLoginStatus();
-            loadAnalyticsData(); // Tải dữ liệu sau khi đăng nhập
-            loadStaffData();     // Tải dữ liệu nhân viên
-        } else {
-            showError('loginError', response.message || 'Đăng nhập thất bại');
-        }
-    });
+    loadEventsData(); // Load events data when page loads
     
     // Xử lý đăng xuất
     document.getElementById('logoutButton').addEventListener('click', function() {
         apiService.logout();
-        checkLoginStatus();
+        window.location.href = 'login.html';
     });
     
-    // Xử lý thêm nhân viên
-    document.addEventListener('DOMContentLoaded', function() {
-    // Xử lý thêm nhân viên
+    // Xử lý thêm nhân viên - FIX: Moved out of nested DOMContentLoaded
     document.getElementById('submitAddStaff').addEventListener('click', async function() {
         const name = document.getElementById('staffName').value;
         const age = document.getElementById('staffAge').value;
@@ -66,36 +48,103 @@ document.addEventListener('DOMContentLoaded', function() {
             modal.hide();
             document.getElementById('addStaffForm').reset();
             loadStaffData();
+            alert('Thêm nhân viên thành công!');
         } else {
             alert('Lỗi: ' + (response.message || 'Không thể thêm nhân viên'));
         }
     });
-});
 
+    // Add event handlers for Edit Staff Modal
+    document.getElementById('editStaffForm').addEventListener('submit', function(e) {
+        e.preventDefault(); // Prevent form submission
+        submitEditStaff();
+    });
+
+    document.getElementById('submitEditStaff').addEventListener('click', function() {
+        submitEditStaff();
+    });
+    
+    // Event filter buttons
+    document.getElementById('viewAllEvents').addEventListener('click', function() {
+        filterEvents('all');
+    });
+    
+    document.getElementById('viewActiveEvents').addEventListener('click', function() {
+        filterEvents('active');
+    });
+    
+    document.getElementById('viewUpcomingEvents').addEventListener('click', function() {
+        filterEvents('upcoming');
+    });
+    
+    // Add event form submission
+    document.getElementById('submitAddEvent').addEventListener('click', function() {
+        submitNewEvent();
+    });
+
+    // Load settings when settings tab is activated
+    document.getElementById('settings-tab').addEventListener('click', function() {
+        loadAllSettings();
+    });
+    
+    // RTSP URL field toggle
+    document.getElementById('cameraSource').addEventListener('change', function() {
+        const rtspField = document.getElementById('rtspUrlField');
+        if (this.value === 'rtsp') {
+            rtspField.style.display = 'block';
+        } else {
+            rtspField.style.display = 'none';
+        }
+    });
+    
+    // Save camera settings
+    document.getElementById('saveSettings').addEventListener('click', function() {
+        saveCameraSettings();
+    });
+    
+    // Save system settings
+    document.getElementById('saveSystemSettings').addEventListener('click', function() {
+        saveSystemSettings();
+    });
+    
+    // Reset system settings
+    document.getElementById('resetSystem').addEventListener('click', function() {
+        resetSettings();
+    });
+    
+    // Update threshold value display
+    document.getElementById('successThreshold').addEventListener('input', function() {
+        document.getElementById('thresholdValue').textContent = `${this.value}%`;
+    });
 });
 
 // Kiểm tra trạng thái đăng nhập
 function checkLoginStatus() {
-    // Lấy token từ localStorage
+    // Lấy token và role từ localStorage
     const token = localStorage.getItem('adminToken');
+    const role = localStorage.getItem('userRole');
     
-    if (token) {
-        // Người dùng đã đăng nhập
-        document.getElementById('adminContent').style.display = 'block';
-        document.getElementById('loginRequiredMessage').style.display = 'none';
-        document.querySelector('.user-menu').style.display = 'block';
-        document.querySelector('.login-menu').style.display = 'none';
-        
-        // Đặt tên người dùng hiện tại
-        const username = localStorage.getItem('adminUsername') || 'Nhân viên';
-        document.getElementById('currentUsername').textContent = username;
-    } else {
-        // Người dùng chưa đăng nhập
-        document.getElementById('adminContent').style.display = 'none';
-        document.getElementById('loginRequiredMessage').style.display = 'block';
-        document.querySelector('.user-menu').style.display = 'none';
-        document.querySelector('.login-menu').style.display = 'block';
+    if (!token) {
+        return false;
     }
+    
+    // Nếu user không phải admin, redirect về trang chính
+    if (role !== 'admin') {
+        window.location.href = 'index.html';
+        return false;
+    }
+    
+    // Người dùng đã đăng nhập và là admin
+    document.getElementById('adminContent').style.display = 'block';
+    document.getElementById('loginRequiredMessage').style.display = 'none';
+    document.querySelector('.user-menu').style.display = 'block';
+    document.querySelector('.login-menu').style.display = 'none';
+    
+    // Đặt tên người dùng hiện tại
+    const username = 'Quản trị viên';
+    document.getElementById('currentUsername').textContent = username;
+    
+    return true;
 }
 
 // Khởi tạo biểu đồ
@@ -326,13 +375,56 @@ function updateAnalyticsTable(data) {
 
 // Tải dữ liệu nhân viên từ API
 async function loadStaffData() {
-    const response = await apiService.getStaff();
-    
-    if (response.success) {
-        updateStaffTable(response.data);
-        generateStaffRecommendations(response.data);
-    } else {
-        console.error('Failed to load staff data');
+    try {
+        // Get staff data from API
+        const staffResponse = await apiService.getStaff();
+        console.log("Staff API response:", staffResponse); // Debug log
+        
+        if (staffResponse.success) {
+            // For employees endpoint
+            let staffData = staffResponse.data;
+            
+            // Check if we got data from the employees endpoint
+            if (!Array.isArray(staffData)) {
+                // Fallback to employees API endpoint
+                const employeesResponse = await fetch(`${apiService.baseUrl}/api/employees`, {
+                    method: 'GET',
+                    headers: apiService.getHeaders()
+                });
+                
+                if (employeesResponse.ok) {
+                    staffData = await employeesResponse.json();
+                    console.log("Fallback employee data:", staffData); // Debug log
+                } else {
+                    console.error("Failed to fetch employees data:", employeesResponse.statusText);
+                    return;
+                }
+            }
+            
+            updateStaffTable(staffData);
+            generateStaffRecommendations(staffData);
+        } else {
+            console.error('Failed to load staff data:', staffResponse.message);
+            
+            // Fallback to direct API call if auth/users fails
+            try {
+                const employeesResponse = await fetch(`${apiService.baseUrl}/api/employees`, {
+                    method: 'GET',
+                    headers: apiService.getHeaders()
+                });
+                
+                if (employeesResponse.ok) {
+                    const staffData = await employeesResponse.json();
+                    console.log("Direct employees API data:", staffData); // Debug log
+                    updateStaffTable(staffData);
+                    generateStaffRecommendations(staffData);
+                }
+            } catch (error) {
+                console.error("Error in fallback staff fetch:", error);
+            }
+        }
+    } catch (error) {
+        console.error('Error in loadStaffData:', error);
     }
 }
 
@@ -348,17 +440,19 @@ function updateStaffTable(staffData) {
     
     staffData.forEach(staff => {
         const row = document.createElement('tr');
+        row.setAttribute('data-staff-id', staff.id); // Add data attribute for easy access
+        
         row.innerHTML = `
             <td>${staff.id}</td>
             <td>${staff.name}</td>
             <td>${staff.age}</td>
             <td>${staff.gender === 'male' ? 'Nam' : 'Nữ'}</td>
-            <td>${formatExperienceLevel(staff.experience_level)}</td>
+            <td data-experience-level="${staff.experience_level}">${formatExperienceLevel(staff.experience_level)}</td>
             <td>
-                <button class="btn btn-sm btn-outline-primary" onclick="editStaff(${staff.id})">
+                <button class="btn btn-sm btn-outline-primary edit-staff-btn" onclick="editStaff('${staff.id}')">
                     <i class="bi bi-pencil"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteStaff(${staff.id})">
+                <button class="btn btn-sm btn-outline-danger delete-staff-btn" onclick="deleteStaff('${staff.id}')">
                     <i class="bi bi-trash"></i>
                 </button>
             </td>
@@ -394,12 +488,18 @@ function generateStaffRecommendations(staffData) {
 // Xóa nhân viên
 async function deleteStaff(staffId) {
     if (confirm('Bạn có chắc muốn xóa nhân viên này?')) {
-        const response = await apiService.deleteStaff(staffId);
-        
-        if (response.success) {
-            loadStaffData(); // Tải lại danh sách
-        } else {
-            alert('Lỗi: ' + (response.message || 'Không thể xóa nhân viên'));
+        try {
+            const response = await apiService.deleteStaff(staffId);
+            
+            if (response.success) {
+                loadStaffData(); // Reload staff data
+                alert('Xóa nhân viên thành công!');
+            } else {
+                alert('Lỗi: ' + (response.message || 'Không thể xóa nhân viên'));
+            }
+        } catch (error) {
+            console.error('Error deleting staff:', error);
+            alert('Đã xảy ra lỗi khi xóa nhân viên');
         }
     }
 }
@@ -421,4 +521,823 @@ function updateChart(timeFrame) {
     
     // Tải dữ liệu mới
     loadAnalyticsData(timeFrame);
+}
+
+// Function to handle edit staff
+function editStaff(staffId) {
+    // First get the staff details
+    const staffRow = document.querySelector(`tr[data-staff-id="${staffId}"]`);
+    if (!staffRow) {
+        console.error(`Staff row not found for ID: ${staffId}`);
+        return;
+    }
+    
+    // Get staff details from the row
+    const name = staffRow.querySelector('td:nth-child(2)').textContent;
+    const age = staffRow.querySelector('td:nth-child(3)').textContent;
+    const gender = staffRow.querySelector('td:nth-child(4)').textContent === 'Nam' ? 'male' : 'female';
+    const experience = staffRow.querySelector('td:nth-child(5)').getAttribute('data-experience-level') || 'junior';
+    
+    // Populate the edit form
+    document.getElementById('editStaffId').value = staffId;
+    document.getElementById('editStaffName').value = name;
+    document.getElementById('editStaffAge').value = age;
+    
+    // Set gender radio buttons
+    if (gender === 'male') {
+        document.getElementById('editGenderMale').checked = true;
+    } else {
+        document.getElementById('editGenderFemale').checked = true;
+    }
+    
+    // Set experience level
+    document.getElementById('editStaffExperience').value = experience;
+    
+    // Show the modal
+    const editModal = new bootstrap.Modal(document.getElementById('editStaffModal'));
+    editModal.show();
+}
+
+// Function to submit edit staff changes
+async function submitEditStaff() {
+    const staffId = document.getElementById('editStaffId').value;
+    const name = document.getElementById('editStaffName').value;
+    const age = document.getElementById('editStaffAge').value;
+    const gender = document.querySelector('input[name="editStaffGender"]:checked').value;
+    const experience = document.getElementById('editStaffExperience').value;
+
+    if (!name || !age || !gender || !experience) {
+        alert('Vui lòng điền đầy đủ thông tin nhân viên');
+        return;
+    }
+
+    const staffData = {
+        name: name,
+        age: parseInt(age),
+        gender: gender,
+        experience_level: experience 
+    };
+
+    try {
+        const response = await apiService.updateStaff(staffId, staffData);
+        
+        if (response.success) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editStaffModal'));
+            modal.hide();
+            loadStaffData(); // Reload staff data
+            alert('Cập nhật nhân viên thành công!');
+        } else {
+            alert('Lỗi: ' + (response.message || 'Không thể cập nhật nhân viên'));
+        }
+    } catch (error) {
+        console.error('Error updating staff:', error);
+        alert('Đã xảy ra lỗi khi cập nhật nhân viên');
+    }
+}
+
+// Load events data from API
+async function loadEventsData() {
+    try {
+        const eventsResponse = await apiService.getEvents();
+        
+        if (eventsResponse.success) {
+            updateEventsTable(eventsResponse.data);
+        } else {
+            console.error('Failed to load events data:', eventsResponse.message);
+        }
+    } catch (error) {
+        console.error('Error in loadEventsData:', error);
+    }
+}
+
+// Update events tables (current/upcoming and past)
+function updateEventsTable(eventsData) {
+    if (!eventsData || !Array.isArray(eventsData)) {
+        console.warn('Invalid events data received:', eventsData);
+        return;
+    }
+    
+    // Split events by status
+    const currentAndUpcomingEvents = eventsData.filter(event => 
+        event.status === 'active' || event.status === 'upcoming');
+    
+    const pastEvents = eventsData.filter(event => 
+        event.status === 'completed');
+    
+    // Update current/upcoming events table
+    const currentTableBody = document.getElementById('eventsTableBody');
+    updateEventsTableContent(currentTableBody, currentAndUpcomingEvents);
+    
+    // Update past events table
+    const pastTableBody = document.getElementById('pastEventsTableBody');
+    updatePastEventsTableContent(pastTableBody, pastEvents);
+    
+    // Save data for filtering
+    window.allEventsData = eventsData;
+}
+
+// Update current/upcoming events table content
+function updateEventsTableContent(tableBody, events) {
+    if (!tableBody) return;
+    
+    tableBody.innerHTML = '';
+    
+    if (!events || events.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Không có sự kiện nào</td></tr>';
+        return;
+    }
+    
+    events.forEach(event => {
+        const row = document.createElement('tr');
+        row.setAttribute('data-event-id', event.id);
+        
+        // Format dates
+        const startDate = new Date(event.start_date).toLocaleDateString();
+        const endDate = new Date(event.end_date).toLocaleDateString();
+        
+        // Format target audience badges
+        let audienceBadges = '';
+        if (event.target_audience && Array.isArray(event.target_audience)) {
+            event.target_audience.forEach(audience => {
+                let badgeClass = '';
+                let audienceLabel = '';
+                
+                switch(audience) {
+                    case 'young':
+                        badgeClass = 'bg-success';
+                        audienceLabel = 'Trẻ (0-20)';
+                        break;
+                    case 'adult':
+                        badgeClass = 'bg-info';
+                        audienceLabel = 'Thanh niên (21-40)';
+                        break;
+                    case 'middle_aged':
+                        badgeClass = 'bg-warning';
+                        audienceLabel = 'Trung niên (41-60)';
+                        break;
+                    case 'elderly':
+                        badgeClass = 'bg-danger';
+                        audienceLabel = 'Cao tuổi (60+)';
+                        break;
+                }
+                
+                audienceBadges += `<span class="badge ${badgeClass} me-1">${audienceLabel}</span>`;
+            });
+        }
+        
+        // Format gender target badge
+        let genderBadge = '';
+        switch(event.target_gender) {
+            case 'male':
+                genderBadge = '<span class="badge bg-info">Nam</span>';
+                break;
+            case 'female':
+                genderBadge = '<span class="badge bg-danger">Nữ</span>';
+                break;
+            default:
+                genderBadge = '<span class="badge bg-secondary">Tất cả</span>';
+                break;
+        }
+        
+        // Format status badge
+        let statusBadge = '';
+        switch(event.status) {
+            case 'active':
+                statusBadge = '<span class="badge bg-primary">Đang diễn ra</span>';
+                break;
+            case 'upcoming':
+                statusBadge = '<span class="badge bg-secondary">Sắp diễn ra</span>';
+                break;
+            case 'completed':
+                statusBadge = '<span class="badge bg-success">Đã kết thúc</span>';
+                break;
+        }
+        
+        // Format visitor count display
+        let visitorDisplay = '';
+        if (event.status === 'upcoming') {
+            visitorDisplay = '0 <small class="text-muted">(chưa bắt đầu)</small>';
+        } else {
+            const matchPercent = event.target_match_percent || 0;
+            let percentClass = matchPercent > 70 ? 'text-success' : 'text-warning';
+            
+            visitorDisplay = `${event.visitor_count || 0} <small class="${percentClass}">(${matchPercent}% đúng mục tiêu)</small>`;
+        }
+        
+        row.innerHTML = `
+            <td>${event.name}</td>
+            <td>${startDate} - ${endDate}</td>
+            <td>${audienceBadges}</td>
+            <td>${genderBadge}</td>
+            <td>${statusBadge}</td>
+            <td>${visitorDisplay}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-info view-event-btn" onclick="viewEvent('${event.id}')">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-primary edit-event-btn" onclick="editEvent('${event.id}')">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger delete-event-btn" onclick="deleteEvent('${event.id}')">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+        
+        tableBody.appendChild(row);
+    });
+}
+
+// Update past events table content
+function updatePastEventsTableContent(tableBody, events) {
+    if (!tableBody) return;
+    
+    tableBody.innerHTML = '';
+    
+    if (!events || events.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Không có sự kiện đã kết thúc</td></tr>';
+        return;
+    }
+    
+    events.forEach(event => {
+        const row = document.createElement('tr');
+        row.setAttribute('data-event-id', event.id);
+        
+        // Format dates
+        const startDate = new Date(event.start_date).toLocaleDateString();
+        const endDate = new Date(event.end_date).toLocaleDateString();
+        
+        // Format target audience badges
+        let audienceBadges = '';
+        if (event.target_audience && Array.isArray(event.target_audience)) {
+            event.target_audience.forEach(audience => {
+                let badgeClass = '';
+                let audienceLabel = '';
+                
+                switch(audience) {
+                    case 'young':
+                        badgeClass = 'bg-success';
+                        audienceLabel = 'Trẻ (0-20)';
+                        break;
+                    case 'adult':
+                        badgeClass = 'bg-info';
+                        audienceLabel = 'Thanh niên (21-40)';
+                        break;
+                    case 'middle_aged':
+                        badgeClass = 'bg-warning';
+                        audienceLabel = 'Trung niên (41-60)';
+                        break;
+                    case 'elderly':
+                        badgeClass = 'bg-danger';
+                        audienceLabel = 'Cao tuổi (60+)';
+                        break;
+                }
+                
+                audienceBadges += `<span class="badge ${badgeClass} me-1">${audienceLabel}</span>`;
+            });
+        }
+        
+        // Format gender target badge
+        let genderBadge = '';
+        switch(event.target_gender) {
+            case 'male':
+                genderBadge = '<span class="badge bg-info">Nam</span>';
+                break;
+            case 'female':
+                genderBadge = '<span class="badge bg-danger">Nữ</span>';
+                break;
+            default:
+                genderBadge = '<span class="badge bg-secondary">Tất cả</span>';
+                break;
+        }
+        
+        // Determine success rate badge
+        let successBadge = '';
+        const matchPercent = event.target_match_percent || 0;
+        
+        if (matchPercent >= 85) {
+            successBadge = '<span class="badge bg-success">Rất thành công</span>';
+        } else if (matchPercent >= 70) {
+            successBadge = '<span class="badge bg-success">Thành công</span>';
+        } else if (matchPercent >= 50) {
+            successBadge = '<span class="badge bg-warning">Trung bình</span>';
+        } else {
+            successBadge = '<span class="badge bg-danger">Chưa thành công</span>';
+        }
+        
+        row.innerHTML = `
+            <td>${event.name}</td>
+            <td>${startDate} - ${endDate}</td>
+            <td>${audienceBadges}</td>
+            <td>${genderBadge}</td>
+            <td>${event.visitor_count || 0}</td>
+            <td>${matchPercent}%</td>
+            <td>${successBadge}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-info" onclick="viewEventReport('${event.id}')">
+                    <i class="bi bi-file-text"></i> Báo cáo
+                </button>
+            </td>
+        `;
+        
+        tableBody.appendChild(row);
+    });
+}
+
+// Filter events by status
+function filterEvents(status) {
+    // Update button active states
+    document.querySelectorAll('.btn-group .btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.getElementById(`view${status.charAt(0).toUpperCase() + status.slice(1)}Events`).classList.add('active');
+    
+    if (!window.allEventsData) return;
+    
+    let filteredEvents;
+    
+    switch(status) {
+        case 'active':
+            filteredEvents = window.allEventsData.filter(event => event.status === 'active');
+            break;
+        case 'upcoming':
+            filteredEvents = window.allEventsData.filter(event => event.status === 'upcoming');
+            break;
+        default: // 'all' or any other value
+            filteredEvents = window.allEventsData.filter(event => 
+                event.status === 'active' || event.status === 'upcoming');
+            break;
+    }
+    
+    const tableBody = document.getElementById('eventsTableBody');
+    updateEventsTableContent(tableBody, filteredEvents);
+}
+
+// View event details
+function viewEvent(eventId) {
+    // This would typically populate a modal with event details
+    alert(`Viewing event with ID: ${eventId}`);
+    // Future implementation: Fetch event details and display in a modal
+}
+
+// Edit event
+async function editEvent(eventId) {
+    try {
+        // Fetch event details
+        const response = await apiService.getEventDetails(eventId);
+        
+        if (!response.success) {
+            alert('Error: ' + (response.message || 'Failed to load event details'));
+            return;
+        }
+        
+        const event = response.data;
+        
+        // Populate form with event data
+        document.getElementById('editEventId').value = event.id;
+        document.getElementById('editEventName').value = event.name;
+        document.getElementById('editEventType').value = event.type;
+        
+        // Format dates for the datetime-local input
+        // Trim off any timezone info as datetime-local doesn't support it
+        let startDate = event.start_date;
+        let endDate = event.end_date;
+        if (startDate.includes('T')) {
+            startDate = startDate.split('T')[0] + 'T' + startDate.split('T')[1].split('.')[0];
+        }
+        if (endDate.includes('T')) {
+            endDate = endDate.split('T')[0] + 'T' + endDate.split('T')[1].split('.')[0];
+        }
+        
+        document.getElementById('editEventStartDate').value = startDate;
+        document.getElementById('editEventEndDate').value = endDate;
+        document.getElementById('editEventDescription').value = event.description || '';
+        document.getElementById('editEventTarget').value = event.target_count || 0;
+        document.getElementById('editSuccessThreshold').value = event.success_threshold || 75;
+        
+        // Set target audience checkboxes
+        const targetAudience = Array.isArray(event.target_audience) ? event.target_audience : [];
+        document.getElementById('editTargetYoung').checked = targetAudience.includes('young');
+        document.getElementById('editTargetAdult').checked = targetAudience.includes('adult');
+        document.getElementById('editTargetMiddleAged').checked = targetAudience.includes('middle_aged');
+        document.getElementById('editTargetElderly').checked = targetAudience.includes('elderly');
+        
+        // Set target gender radio button
+        const targetGender = event.target_gender || 'all';
+        document.getElementById(`editTarget${targetGender.charAt(0).toUpperCase() + targetGender.slice(1)}`).checked = true;
+        
+        // Update threshold value display
+        document.getElementById('editThresholdValue').textContent = `${event.success_threshold || 75}%`;
+        
+        // Show the edit modal
+        const editModal = new bootstrap.Modal(document.getElementById('editEventModal'));
+        editModal.show();
+    } catch (error) {
+        console.error('Error loading event details:', error);
+        alert('Failed to load event details. Please try again.');
+    }
+}
+
+// Add this new function to handle event update submission
+async function submitEditEvent() {
+    const eventId = document.getElementById('editEventId').value;
+    const name = document.getElementById('editEventName').value;
+    const type = document.getElementById('editEventType').value;
+    const startDate = document.getElementById('editEventStartDate').value;
+    const endDate = document.getElementById('editEventEndDate').value;
+    const description = document.getElementById('editEventDescription').value;
+    const targetCount = document.getElementById('editEventTarget').value;
+    const successThreshold = document.getElementById('editSuccessThreshold').value;
+    
+    // Get target audience (checkboxes)
+    const targetAudience = [];
+    document.querySelectorAll('input[name="editTargetAudience"]:checked').forEach(checkbox => {
+        targetAudience.push(checkbox.value);
+    });
+    
+    // Get target gender (radio buttons)
+    const targetGender = document.querySelector('input[name="editTargetGender"]:checked').value;
+    
+    // Validate form
+    if (!name || !type || !startDate || !endDate || targetAudience.length === 0) {
+        alert('Vui lòng điền đầy đủ thông tin sự kiện');
+        return;
+    }
+    
+    // Create event data object
+    const eventData = {
+        name: name,
+        type: type,
+        start_date: startDate,
+        end_date: endDate,
+        target_audience: targetAudience,
+        target_gender: targetGender,
+        description: description,
+        target_count: parseInt(targetCount) || 0,
+        success_threshold: parseInt(successThreshold) || 75
+    };
+    
+    try {
+        const response = await apiService.updateEvent(eventId, eventData);
+        
+        if (response.success) {
+            // Close modal and refresh event data
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editEventModal'));
+            modal.hide();
+            
+            // Reload events data
+            loadEventsData();
+            
+            alert('Cập nhật sự kiện thành công!');
+        } else {
+            alert('Lỗi: ' + (response.message || 'Không thể cập nhật sự kiện'));
+        }
+    } catch (error) {
+        console.error('Error updating event:', error);
+        alert('Đã xảy ra lỗi khi cập nhật sự kiện');
+    }
+}
+
+// Delete event
+async function deleteEvent(eventId) {
+    if (confirm('Bạn có chắc muốn xóa sự kiện này?')) {
+        try {
+            const response = await apiService.deleteEvent(eventId);
+            
+            if (response.success) {
+                loadEventsData(); // Reload events data
+                alert('Xóa sự kiện thành công!');
+            } else {
+                alert('Lỗi: ' + (response.message || 'Không thể xóa sự kiện'));
+            }
+        } catch (error) {
+            console.error('Error deleting event:', error);
+            alert('Đã xảy ra lỗi khi xóa sự kiện');
+        }
+    }
+}
+
+// View event report
+function viewEventReport(eventId) {
+    // This would typically populate a modal with a detailed event report
+    alert(`Viewing report for event with ID: ${eventId}`);
+    // Future implementation: Fetch event report data and display in a modal
+}
+
+// Submit new event
+async function submitNewEvent() {
+    // Get form values
+    const name = document.getElementById('eventName').value;
+    const type = document.getElementById('eventType').value;
+    const startDate = document.getElementById('eventStartDate').value;
+    const endDate = document.getElementById('eventEndDate').value;
+    const description = document.getElementById('eventDescription').value;
+    const targetCount = document.getElementById('eventTarget').value;
+    const successThreshold = document.getElementById('successThreshold').value;
+    
+    // Get target audience (checkboxes)
+    const targetAudience = [];
+    document.querySelectorAll('input[name="targetAudience"]:checked').forEach(checkbox => {
+        targetAudience.push(checkbox.value);
+    });
+    
+    // Get target gender (radio buttons)
+    const targetGender = document.querySelector('input[name="targetGender"]:checked').value;
+    
+    // Validate form
+    if (!name || !type || !startDate || !endDate || targetAudience.length === 0) {
+        alert('Vui lòng điền đầy đủ thông tin sự kiện');
+        return;
+    }
+    
+    // Create event data object
+    const eventData = {
+        name: name,
+        type: type,
+        start_date: startDate,
+        end_date: endDate,
+        target_audience: targetAudience,
+        target_gender: targetGender,
+        description: description,
+        target_count: parseInt(targetCount) || 0,
+        success_threshold: parseInt(successThreshold) || 75
+    };
+    
+    try {
+        const response = await apiService.createEvent(eventData);
+        
+        if (response.success) {
+            // Close modal and refresh event data
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addEventModal'));
+            modal.hide();
+            
+            // Clear form
+            document.getElementById('addEventForm').reset();
+            
+            // Reload events data
+            loadEventsData();
+            
+            alert('Tạo sự kiện thành công!');
+        } else {
+            alert('Lỗi: ' + (response.message || 'Không thể tạo sự kiện'));
+        }
+    } catch (error) {
+        console.error('Error creating event:', error);
+        alert('Đã xảy ra lỗi khi tạo sự kiện');
+    }
+}
+
+// Load all settings
+async function loadAllSettings() {
+    await loadCameraSettings();
+    await loadSystemSettings();
+}
+
+// Load camera settings
+async function loadCameraSettings() {
+    try {
+        const response = await apiService.getSettings('camera');
+        
+        if (response.success && response.data) {
+            const settings = response.data;
+            
+            // Set detection sensitivity
+            document.getElementById('detectionSensitivity').value = settings.detection_sensitivity || 50;
+            
+            // Set camera source
+            const cameraSource = document.getElementById('cameraSource');
+            cameraSource.value = settings.camera_source || '0';
+            
+            // Set RTSP URL if available
+            document.getElementById('rtspUrl').value = settings.rtsp_url || '';
+            
+            // Show/hide RTSP URL field
+            const rtspField = document.getElementById('rtspUrlField');
+            rtspField.style.display = cameraSource.value === 'rtsp' ? 'block' : 'none';
+            
+            // Show success message
+            showToast('Đã tải cài đặt camera thành công', 'success');
+        } else {
+            console.error('Failed to load camera settings:', response.message);
+        }
+    } catch (error) {
+        console.error('Error loading camera settings:', error);
+    }
+}
+
+// Load system settings
+async function loadSystemSettings() {
+    try {
+        const response = await apiService.getSettings('system');
+        
+        if (response.success && response.data) {
+            const settings = response.data;
+            
+            // Set auto restart toggle
+            document.getElementById('enableAutoRestart').checked = settings.enable_auto_restart !== false;
+            
+            // Set notifications toggle
+            document.getElementById('enableNotifications').checked = settings.enable_notifications !== false;
+            
+            // Set data retention
+            const retentionSelect = document.getElementById('dataRetention');
+            retentionSelect.value = settings.data_retention_days || '30';
+            
+            // Show success message
+            showToast('Đã tải cài đặt hệ thống thành công', 'success');
+        } else {
+            console.error('Failed to load system settings:', response.message);
+        }
+    } catch (error) {
+        console.error('Error loading system settings:', error);
+    }
+}
+
+// Save camera settings
+async function saveCameraSettings() {
+    try {
+        // Show loading indicator
+        const saveButton = document.getElementById('saveSettings');
+        const originalText = saveButton.innerHTML;
+        saveButton.innerHTML = '<i class="bi bi-hourglass"></i> Đang lưu...';
+        saveButton.disabled = true;
+        
+        // Get settings values
+        const detectionSensitivity = parseInt(document.getElementById('detectionSensitivity').value);
+        const cameraSource = document.getElementById('cameraSource').value;
+        const rtspUrl = document.getElementById('rtspUrl').value;
+        
+        // Create settings object
+        const settings = {
+            detection_sensitivity: detectionSensitivity,
+            camera_source: cameraSource,
+            rtsp_url: rtspUrl
+        };
+        
+        // Save settings
+        const response = await apiService.saveSettings('camera', settings);
+        
+        // Restore button
+        saveButton.innerHTML = originalText;
+        saveButton.disabled = false;
+        
+        if (response.success) {
+            showToast('Đã lưu cài đặt camera thành công', 'success');
+            
+            // Refresh video feed if there's one on the page
+            const videoFeed = document.getElementById('videoFeed');
+            if (videoFeed) {
+                videoFeed.src = `${apiService.baseUrl}/video_feed?t=${new Date().getTime()}`;
+            }
+        } else {
+            showToast(response.message || 'Lỗi khi lưu cài đặt camera', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving camera settings:', error);
+        document.getElementById('saveSettings').disabled = false;
+        showToast('Lỗi kết nối với server khi lưu cài đặt camera', 'error');
+    }
+}
+
+// Save system settings
+async function saveSystemSettings() {
+    try {
+        // Show loading indicator
+        const saveButton = document.getElementById('saveSystemSettings');
+        const originalText = saveButton.innerHTML;
+        saveButton.innerHTML = '<i class="bi bi-hourglass"></i> Đang lưu...';
+        saveButton.disabled = true;
+        
+        // Get settings values
+        const enableAutoRestart = document.getElementById('enableAutoRestart').checked;
+        const enableNotifications = document.getElementById('enableNotifications').checked;
+        const dataRetention = parseInt(document.getElementById('dataRetention').value);
+        
+        // Create settings object
+        const settings = {
+            enable_auto_restart: enableAutoRestart,
+            enable_notifications: enableNotifications,
+            data_retention_days: dataRetention
+        };
+        
+        // Save settings
+        const response = await apiService.saveSettings('system', settings);
+        
+        // Restore button
+        saveButton.innerHTML = originalText;
+        saveButton.disabled = false;
+        
+        if (response.success) {
+            showToast('Đã lưu cài đặt hệ thống thành công', 'success');
+        } else {
+            showToast(response.message || 'Lỗi khi lưu cài đặt hệ thống', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving system settings:', error);
+        document.getElementById('saveSystemSettings').disabled = false;
+        showToast('Lỗi kết nối với server khi lưu cài đặt hệ thống', 'error');
+    }
+}
+
+// Reset settings
+async function resetSettings() {
+    // Ask for confirmation
+    if (!confirm('Bạn có chắc chắn muốn khôi phục cài đặt mặc định không?')) {
+        return;
+    }
+    
+    try {
+        // Show loading indicator
+        const resetButton = document.getElementById('resetSystem');
+        const originalText = resetButton.innerHTML;
+        resetButton.innerHTML = '<i class="bi bi-hourglass"></i> Đang khôi phục...';
+        resetButton.disabled = true;
+        
+        // Reset settings
+        const response = await apiService.resetSettings();
+        
+        // Restore button
+        resetButton.innerHTML = originalText;
+        resetButton.disabled = false;
+        
+        if (response.success) {
+            showToast('Đã khôi phục cài đặt mặc định thành công', 'success');
+            
+            // Reload settings
+            loadAllSettings();
+            
+            // Refresh video feed if there's one on the page
+            const videoFeed = document.getElementById('videoFeed');
+            if (videoFeed) {
+                videoFeed.src = `${apiService.baseUrl}/video_feed?t=${new Date().getTime()}`;
+            }
+        } else {
+            showToast(response.message || 'Lỗi khi khôi phục cài đặt mặc định', 'error');
+        }
+    } catch (error) {
+        console.error('Error resetting settings:', error);
+        document.getElementById('resetSystem').disabled = false;
+        showToast('Lỗi kết nối với server khi khôi phục cài đặt mặc định', 'error');
+    }
+}
+
+// Show toast message
+function showToast(message, type = 'info') {
+    // Create toast container if it doesn't exist
+    let toastContainer = document.getElementById('toastContainer');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toastContainer';
+        toastContainer.style.position = 'fixed';
+        toastContainer.style.top = '20px';
+        toastContainer.style.right = '20px';
+        toastContainer.style.zIndex = '1050';
+        document.body.appendChild(toastContainer);
+    }
+    
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast show bg-${type === 'error' ? 'danger' : type}`;
+    toast.role = 'alert';
+    toast.ariaLive = 'assertive';
+    toast.ariaAtomic = 'true';
+    
+    // Create toast header
+    const toastHeader = document.createElement('div');
+    toastHeader.className = 'toast-header';
+    
+    const title = type.charAt(0).toUpperCase() + type.slice(1);
+    toastHeader.innerHTML = `
+        <strong class="me-auto">
+            <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+            ${title}
+        </strong>
+        <small>bây giờ</small>
+        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    `;
+    
+    // Create toast body
+    const toastBody = document.createElement('div');
+    toastBody.className = 'toast-body text-white';
+    toastBody.textContent = message;
+    
+    // Assemble toast
+    toast.appendChild(toastHeader);
+    toast.appendChild(toastBody);
+    
+    // Add to container
+    toastContainer.appendChild(toast);
+    
+    // Remove after 5 seconds
+    setTimeout(() => {
+        toast.remove();
+    }, 5000);
+    
+    // Add click listener to close button
+    const closeButton = toast.querySelector('.btn-close');
+    if (closeButton) {
+        closeButton.addEventListener('click', () => {
+            toast.remove();
+        });
+    }
 }
