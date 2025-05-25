@@ -5,6 +5,19 @@ https://docs.google.com/spreadsheets/d/1eMwZ1l8ufROmZK0wkOPAWx5Ww9Q3R3y9WV3Z561o
 
 Hệ thống giúp đếm và phân loại khách hàng trong cửa hàng sử dụng trí tuệ nhân tạo để phân tích hình ảnh từ camera an ninh.
 
+# Danh sách thành viên
+- 24022404 - Nguyễn Đức Minh
+- 23020370 - Đồng Mạnh Hùng
+- 23020345 - Phạm Tiến Dũng
+- 20021180 - Nguyễn Tiến An
+- 23020348 - Nguyễn Văn Duy
+
+# Liên kết Docker Hub
+
+# Hướng dẫn chạy docker-compose up -d
+
+# Nhiệm vụ
+
 ## Frontend - Người dùng
 
 ### Chức năng
@@ -45,3 +58,5 @@ Hệ thống giúp đếm và phân loại khách hàng trong cửa hàng sử d
 - Sử dụng mã truy cập: `ADMIN` hoặc `NHANVIEN`
 - Vai trò ADMIN: Truy cập toàn bộ hệ thống (cả trang chính và trang quản trị)
 - Vai trò NHANVIEN: Chỉ truy cập trang chính
+
+# Use case
