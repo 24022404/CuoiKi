@@ -77,13 +77,13 @@ Hệ thống giúp đếm và phân loại khách hàng trong cửa hàng sử d
     2.  Hệ thống kiểm tra mã truy cập.
     3.  Hệ thống kiểm tra hoàn tất và hiển thị thông báo "Đăng nhập thành công. Đang chuyển hướng..".
 -   **Alternative Flow**:
-    -   Bước 2: Mã truy cập không hợp lệ: Quay lại bước 1.
+    -   2. Mã truy cập không hợp lệ: Quay lại bước 1.
 -   **Post-condition**:
     -   Người dùng đã được xác thực và có quyền truy cập vào các chức năng phù hợp với vai trò của họ.
     -   Giao diện người dùng được cập nhật để phản ánh trạng thái đăng nhập.
 -   **Exceptions**:
     -   Lỗi hệ thống: Nếu có lỗi trong quá trình xử lý trạng thái đăng nhập, người dùng có thể không được chuyển hướng hoặc giao diện không hiển thị chính xác.
-    
+
 ## 2. UC2: Đăng xuất Người dùng
 - Mô tả: Người dùng chủ động kết thúc phiên làm việc trên hệ thống.
 
