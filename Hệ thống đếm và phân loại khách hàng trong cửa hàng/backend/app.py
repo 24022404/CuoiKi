@@ -695,6 +695,10 @@ def generate_frames():
             continue
 
 # API routes
+@app.route("/")
+def index():
+    return jsonify({"message": "Backend API is running!"})
+
 @app.route('/video_feed')
 def video_feed():
     """Route to serve the video feed"""
