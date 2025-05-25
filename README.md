@@ -73,11 +73,11 @@ Hệ thống giúp đếm và phân loại khách hàng trong cửa hàng sử d
     -   Người dùng đang ở giao diện đăng nhập của ứng dụng.
     -   Hệ thống Backend đang hoạt động và sẵn sàng xử lý các yêu cầu xác thực.
 -   **Main Flow**:
-    1.  Người dùng nhập mã truy cập phù hợp.
-    2.  Hệ thống kiểm tra mã truy cập.
-    3.  Hệ thống kiểm tra hoàn tất và hiển thị thông báo "Đăng nhập thành công. Đang chuyển hướng..".
+    -   **Bước 1**: Người dùng nhập mã truy cập phù hợp.
+    -   **Bước 2**: Hệ thống kiểm tra mã truy cập.
+    -   **Bước 3**: Hệ thống kiểm tra hoàn tất và hiển thị thông báo "Đăng nhập thành công. Đang chuyển hướng..".
 -   **Alternative Flow**:
-    -   2. Mã truy cập không hợp lệ: Quay lại bước 1.
+    -   **Bước 2**: Mã truy cập không hợp lệ: Quay lại bước 1.
 -   **Post-condition**:
     -   Người dùng đã được xác thực và có quyền truy cập vào các chức năng phù hợp với vai trò của họ.
     -   Giao diện người dùng được cập nhật để phản ánh trạng thái đăng nhập.
