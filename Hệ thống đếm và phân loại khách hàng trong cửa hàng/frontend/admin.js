@@ -24,33 +24,56 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Xử lý thêm nhân viên - FIX: Moved out of nested DOMContentLoaded
     document.getElementById('submitAddStaff').addEventListener('click', async function() {
-        const name = document.getElementById('staffName').value;
-        const age = document.getElementById('staffAge').value;
-        const gender = document.querySelector('input[name="staffGender"]:checked').value;
-        const experience = document.getElementById('staffExperience').value;
+        const button = this; // Reference to the button
+        const originalButtonText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang thêm...';
 
-        if (!name || !age || !gender || !experience) {
-            alert('Vui lòng điền đầy đủ thông tin nhân viên');
-            return;
-        }
+        try {
+            const name = document.getElementById('staffName').value;
+            const age = document.getElementById('staffAge').value;
+            const genderRadio = document.querySelector('input[name="staffGender"]:checked');
+            const experience = document.getElementById('staffExperience').value;
 
-        const staffData = {
-            name: name,
-            age: parseInt(age),
-            gender: gender,
-            experience_level: experience 
-        };
+            if (!name || !age || !genderRadio || !experience) {
+                alert('Vui lòng điền đầy đủ thông tin nhân viên');
+                // No return here, finally block will re-enable button
+            } else {
+                const gender = genderRadio.value;
 
-        const response = await apiService.addStaff(staffData);
+                const staffData = {
+                    name: name,
+                    age: parseInt(age),
+                    gender: gender,
+                    experience_level: experience 
+                };
 
-        if (response.success) {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('addStaffModal'));
-            modal.hide();
-            document.getElementById('addStaffForm').reset();
-            loadStaffData();
-            alert('Thêm nhân viên thành công!');
-        } else {
-            alert('Lỗi: ' + (response.message || 'Không thể thêm nhân viên'));
+                console.log("Submitting staff data:", staffData); // For debugging
+                const response = await apiService.addStaff(staffData);
+                console.log("API response for addStaff:", response); // For debugging
+
+                if (response && response.success) {
+                    const modalEl = document.getElementById('addStaffModal');
+                    if (modalEl) {
+                        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                        if (modalInstance) modalInstance.hide();
+                    }
+                    const formEl = document.getElementById('addStaffForm');
+                    if (formEl) formEl.reset();
+                    
+                    loadStaffData(); // Reload data
+                    alert('Thêm nhân viên thành công!');
+                } else {
+                    const errorMessage = (response && response.message) ? response.message : 'Không thể thêm nhân viên. Phản hồi không hợp lệ từ server.';
+                    alert('Lỗi: ' + errorMessage);
+                }
+            }
+        } catch (error) {
+            console.error("Error in submitAddStaff:", error);
+            alert('Đã xảy ra lỗi trong quá trình thêm nhân viên. Vui lòng kiểm tra console (F12).');
+        } finally {
+            button.disabled = false;
+            button.innerHTML = originalButtonText;
         }
     });
 
@@ -116,6 +139,13 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('successThreshold').addEventListener('input', function() {
         document.getElementById('thresholdValue').textContent = `${this.value}%`;
     });
+    const editThresholdSlider = document.getElementById('editSuccessThreshold');
+    const editThresholdValueDisplay = document.getElementById('editThresholdValue');
+    if (editThresholdSlider && editThresholdValueDisplay) {
+        editThresholdSlider.addEventListener('input', function() {
+            editThresholdValueDisplay.textContent = `${this.value}%`;
+        });
+    }
 });
 
 // Kiểm tra trạng thái đăng nhập

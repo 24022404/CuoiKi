@@ -229,11 +229,30 @@ class ApiService {
                 body: JSON.stringify(staffData)
             });
 
-            const data = await response.json();
-            return { success: response.ok, message: data.message || 'Thêm nhân viên thành công' };
-        } catch (error) {
-            console.error('Add staff error:', error);
-            return { success: false, message: 'Lỗi kết nối với server' };
+            if (!response.ok) {
+                let errorMessage = `Lỗi máy chủ: ${response.status}`;
+                try {
+                    // Try to get a more specific message from the server response
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch (e) {
+                    // If parsing error JSON fails, use status text or the generic message
+                    errorMessage = response.statusText || errorMessage;
+                    console.warn("Could not parse error response as JSON for addStaff.");
+                }
+                console.error('Add staff API error response:', errorMessage);
+                return { success: false, message: errorMessage };
+            }
+
+            const data = await response.json(); // Safe to parse JSON now
+            return { 
+                success: true, 
+                message: data.message || 'Thêm nhân viên thành công', 
+                data: data // Include returned data if backend sends it
+            };
+        } catch (error) { // Catches network errors or other unexpected errors during fetch
+            console.error('Add staff network/fetch error:', error);
+            return { success: false, message: 'Lỗi kết nối với server khi thêm nhân viên. Vui lòng kiểm tra kết nối mạng.' };
         }
     }
 
