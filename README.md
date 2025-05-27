@@ -2,16 +2,6 @@
 
 Hệ thống AI giúp đếm và phân loại khách hàng trong cửa hàng sử dụng trí tuệ nhân tạo để phân tích hình ảnh từ camera an ninh. Hệ thống cung cấp khuyến nghị phân bổ nhân viên thông minh và đánh giá hiệu quả sự kiện dựa trên đối tượng khách hàng mục tiêu.
 
-## 📸 Demo Hệ Thống
-
-### Giao diện chính - Phân tích thời gian thực
-![Dashboard chính](./docs/images/main-dashboard.png)
-*Giao diện theo dõi khách hàng với phân tích AI thời gian thực và khuyến nghị phân bổ nhân viên*
-
-### Trang quản trị - Quản lý sự kiện
-![Trang quản trị](./docs/images/admin-panel.png)
-*Trang quản trị cho phép tạo sự kiện, quản lý nhân viên và theo dõi hiệu quả*
-
 ## 👥 Danh sách thành viên
 - **24022404** - Nguyễn Đức Minh (Nhóm trưởng)
 - **23020370** - Đồng Mạnh Hùng
