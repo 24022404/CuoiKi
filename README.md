@@ -28,7 +28,7 @@ git clone [https://github.com/24022404/CuoiKi.git]
 cd đến folder "Hệ thống đếm và phân loại khách hàng trong cửa hàng"
 ```
 
-### Bước 2: Pull images từ Docker Hub (tùy chọn)
+### Bước 2: Pull images từ Docker Hub 
 ```bash
 docker pull nguyenducminh24022404/customer-analytics-backend
 docker pull nguyenducminh24022404/customer-analytics-frontend
