@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  backend-db:
+    image: redis:alpine
+    container_name: customer-analytics-db
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  # camera-stream:
+  #   build:
+  #     context: ./camera-stream
+  #     dockerfile: Dockerfile
+  #   container_name: camera-stream-server
+  #   ports:
+  #     - "8554:8554"
+  #   devices:
+  #     - /dev/video0:/dev/video0  # Map camera device (if available on Linux)
+  #   privileged: true  # Required for camera access
+  #   restart: unless-stopped
+  #   environment:
+  #     - DISPLAY=:0
+  #   volumes:
+  #     - /dev:/dev  # Map device directory for camera access
+
+  backend-ai:
+    image: nguyenducminh24022404/customer-analytics-backend  # Thay đổi từ build thành image
+    container_name: customer-analytics-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - REDIS_URL=redis://backend-db:6379
+      - CAMERA_SOURCE=http://host.docker.internal:8554/video_feed
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - backend-db
+    restart: unless-stopped
+
+  frontend-user:
+    image: nguyenducminh24022404/customer-analytics-frontend  # Thay đổi từ build thành image
+    container_name: customer-analytics-frontend
+    ports:
+      - "80:80"
+      - "8080:80"
+    depends_on:
+      - backend-ai
+    restart: unless-stopped
+
+volumes:
+  redis_data:

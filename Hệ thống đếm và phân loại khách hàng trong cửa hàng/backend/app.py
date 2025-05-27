@@ -187,7 +187,22 @@ def capture_frames():
         try:
             if video_capture is None or not video_capture.isOpened():
                 time.sleep(1.0)
-                if not initialize_camera():
+                # Try to reinitialize camera with environment variable if available
+                camera_source = os.environ.get('CAMERA_SOURCE')
+                rtsp_url = None
+                
+                if camera_source and camera_source.startswith(('http://', 'https://', 'rtsp://')):
+                    rtsp_url = camera_source
+                    camera_source = None
+                elif camera_source:
+                    try:
+                        camera_source = int(camera_source)
+                    except ValueError:
+                        camera_source = 0
+                else:
+                    camera_source = 0
+                
+                if not initialize_camera(camera_source=camera_source, rtsp_url=rtsp_url):
                     continue
             
             # Read a frame from the camera
@@ -1396,9 +1411,26 @@ def main():
     configure_hardware_acceleration()
     
     # Initialize camera with improved error handling
+    # Check for camera source from environment variable or settings
+    camera_source = os.environ.get('CAMERA_SOURCE')
+    rtsp_url = None
+    
+    if camera_source and camera_source.startswith(('http://', 'https://', 'rtsp://')):
+        rtsp_url = camera_source
+        camera_source = None
+    elif camera_source:
+        try:
+            camera_source = int(camera_source)
+        except ValueError:
+            camera_source = 0
+    else:
+        camera_source = 0
+    
+    print(f"Initializing camera with source: {rtsp_url or camera_source}")
+    
     camera_initialized = False
     for attempt in range(3):
-        if initialize_camera():
+        if initialize_camera(camera_source=camera_source, rtsp_url=rtsp_url):
             camera_initialized = True
             break
         print(f"Camera initialization attempt {attempt+1}/3 failed, retrying...")

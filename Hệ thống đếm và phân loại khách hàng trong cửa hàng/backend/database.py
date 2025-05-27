@@ -651,42 +651,60 @@ def get_all_events() -> List[Dict[str, Any]]:
     redis_client = get_redis_client()
     events = []
     
-    # Get all event IDs
-    event_ids = redis_client.smembers(f"{EVENT_PREFIX}all")
-    
-    for event_id in event_ids:
-        event_key = f"{EVENT_PREFIX}{event_id}"
-        if redis_client.exists(event_key):
-            event_data = redis_client.hgetall(event_key)
-            
-            # Parse JSON fields
-            if "target_audience" in event_data:
-                try:
-                    event_data["target_audience"] = json.loads(event_data["target_audience"])
-                except json.JSONDecodeError:
-                    event_data["target_audience"] = []
-            
-            # Convert numeric fields
-            for field in ["target_count", "visitor_count", "success_threshold", "target_match_percent"]:
-                if field in event_data:
+    try:
+        # Get all event IDs
+        event_ids = redis_client.smembers(f"{EVENT_PREFIX}all")
+        
+        for event_id in event_ids:
+            # Decode bytes to string if needed
+            if isinstance(event_id, bytes):
+                event_id = event_id.decode('utf-8')
+                
+            event_key = f"{EVENT_PREFIX}{event_id}"
+            if redis_client.exists(event_key):
+                event_data_raw = redis_client.hgetall(event_key)
+                
+                # Convert all bytes to strings
+                event_data = {}
+                for key, value in event_data_raw.items():
+                    if isinstance(key, bytes):
+                        key = key.decode('utf-8')
+                    if isinstance(value, bytes):
+                        value = value.decode('utf-8')
+                    event_data[key] = value
+                
+                # Parse JSON fields
+                if "target_audience" in event_data:
                     try:
-                        event_data[field] = int(event_data[field])
-                    except ValueError:
-                        event_data[field] = 0
-            
-            # Update event status based on current date
-            current_date = datetime.datetime.now().isoformat()
-            if event_data.get("start_date", "") <= current_date <= event_data.get("end_date", ""):
-                event_data["status"] = "active"
-            elif current_date > event_data.get("end_date", ""):
-                event_data["status"] = "completed"
-            else:
-                event_data["status"] = "upcoming"
-            
-            # Save updated status
-            redis_client.hset(event_key, "status", event_data["status"])
-            
-            events.append(event_data)
+                        event_data["target_audience"] = json.loads(event_data["target_audience"])
+                    except json.JSONDecodeError:
+                        event_data["target_audience"] = []
+                
+                # Convert numeric fields
+                for field in ["target_count", "visitor_count", "success_threshold", "target_match_percent"]:
+                    if field in event_data:
+                        try:
+                            event_data[field] = int(event_data[field])
+                        except (ValueError, TypeError):
+                            event_data[field] = 0
+                
+                # Update event status based on current date
+                current_date = datetime.datetime.now().isoformat()
+                if event_data.get("start_date", "") <= current_date <= event_data.get("end_date", ""):
+                    event_data["status"] = "active"
+                elif current_date > event_data.get("end_date", ""):
+                    event_data["status"] = "completed"
+                else:
+                    event_data["status"] = "upcoming"
+                
+                # Save updated status
+                redis_client.hset(event_key, "status", event_data["status"])
+                
+                events.append(event_data)
+    
+    except Exception as e:
+        print(f"Error getting all events: {e}")
+        return []
     
     return events
 

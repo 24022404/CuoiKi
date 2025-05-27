@@ -53,13 +53,15 @@ Chỉ cần tích hợp 1 trong 2 đường link kia vào thôi để biến th�
     ```
     
 - Truy cập ứng dụng (ví dụ: tại `http://localhost`).
-- Kiểm tra bằng cách tải lên hình ảnh để xác nhận mô hình AI hoạt động (ví dụ: phát hiện khuôn mặt hoặc biển số).
+- Kiểm tra bằng cách tải lên hình ảnh để xác nhận mô hình AI hoạt động 
+(ví dụ: phát hiện khuôn mặt hoặc biển số).
 - Đảm bảo giáo viên có thể chạy hệ thống với `docker-compose up -d`.
 
 ### Đẩy Lên Docker Hub
 
 - Xây dựng và gắn thẻ hình ảnh Docker:
-    - Với frontend và backend tách biệt: Gắn thẻ mỗi hình ảnh (ví dụ: `yourusername/client` và `yourusername/server`).
+    - Với frontend và backend tách biệt: Gắn thẻ mỗi hình ảnh 
+    (ví dụ: `yourusername/client` và `yourusername/server`).
     - Với ứng dụng kết hợp: Gắn thẻ hình ảnh duy nhất (ví dụ: `yourusername/detection-app`).
 - Đẩy lên Docker Hub:
     
