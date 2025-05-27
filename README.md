@@ -25,7 +25,7 @@ Hệ thống AI giúp đếm và phân loại khách hàng trong cửa hàng s�
 ### Bước 1: Clone repository
 ```bash
 git clone [https://github.com/24022404/CuoiKi.git]
-cd "Hệ thống đếm và phân loại khách hàng trong cửa hàng"
+cd đến folder "Hệ thống đếm và phân loại khách hàng trong cửa hàng"
 ```
 
 ### Bước 2: Pull images từ Docker Hub (tùy chọn)
