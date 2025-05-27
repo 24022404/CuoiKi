@@ -2,6 +2,16 @@
 
 Hệ thống AI giúp đếm và phân loại khách hàng trong cửa hàng sử dụng trí tuệ nhân tạo để phân tích hình ảnh từ camera an ninh. Hệ thống cung cấp khuyến nghị phân bổ nhân viên thông minh và đánh giá hiệu quả sự kiện dựa trên đối tượng khách hàng mục tiêu.
 
+## 📸 Demo Hệ Thống
+
+### Giao diện chính - Phân tích thời gian thực
+![Dashboard chính](./docs/images/main-dashboard.png)
+*Giao diện theo dõi khách hàng với phân tích AI thời gian thực và khuyến nghị phân bổ nhân viên*
+
+### Trang quản trị - Quản lý sự kiện
+![Trang quản trị](./docs/images/admin-panel.png)
+*Trang quản trị cho phép tạo sự kiện, quản lý nhân viên và theo dõi hiệu quả*
+
 ## 👥 Danh sách thành viên
 - **24022404** - Nguyễn Đức Minh (Nhóm trưởng)
 - **23020370** - Đồng Mạnh Hùng
@@ -108,14 +118,14 @@ Hệ thống đánh giá hiệu quả sự kiện dựa trên đối tượng m�
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Frontend      │    │   Backend AI    │    │   Database      │
-│   (React/HTML)  │◄──►│   (Flask/CV)    │◄──►│   (Redis)       │
+│   (HTML/JS)     │◄──►│ (Flask/DeepFace)│◄──►│   (Redis)       │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          ▲                        ▲
          │                        │
          ▼                        ▼
 ┌─────────────────┐    ┌─────────────────┐
 │   Admin Panel   │    │  Camera Stream  │
-│   (Management)  │    │   (OpenCV)      │
+│   (Management)  │    │ (OpenCV/Host)   │
 └─────────────────┘    └─────────────────┘
 ```
 
@@ -136,10 +146,11 @@ Hệ thống đánh giá hiệu quả sự kiện dựa trên đối tượng m�
 - Xem nhật ký và lịch sử
 
 #### 3. Backend - AI
-- Nhận diện khuôn mặt (DeepFace)
-- Phân loại độ tuổi và giới tính
-- Xử lý video thời gian thực
-- API RESTful
+- **Nhận diện khuôn mặt**: DeepFace với các detector backend (SSD, OpenCV)
+- **Phân tích tuổi**: DeepFace age prediction models
+- **Phân tích giới tính**: DeepFace gender prediction models  
+- **Xử lý video**: OpenCV cho capture và preprocessing
+- **API RESTful**: Flask framework
 
 #### 4. Backend - Database
 - Lưu trữ dữ liệu người dùng và sự kiện
@@ -155,7 +166,7 @@ Hệ thống đánh giá hiệu quả sự kiện dựa trên đối tượng m�
 - **Flow**: Nhập mã truy cập → Xác thực → Truy cập hệ thống
 
 ### UC2: Hiển thị video và phân tích thời gian thực
-- **Actor**: Người dùng
+- **Actor**: Nhân viên
 - **Mục tiêu**: Theo dõi khách hàng trực tiếp
 - **Flow**: Kết nối camera → Phân tích AI → Hiển thị kết quả
 
@@ -182,37 +193,46 @@ Hệ thống đánh giá hiệu quả sự kiện dựa trên đối tượng m�
 - FPS: 15-30
 
 ### AI
-- **Độ chính xác độ tuổi**: ≥75%
+- **Framework chính**: DeepFace (TensorFlow backend)
+- **Face Detection**: SSD, OpenCV detector backends
+- **Models**: VGG-Face cho face recognition, Age/Gender prediction models
+- **Độ chính xác tuổi**: ≥75%
 - **Độ trễ xử lý**: ≤2 giây
 - **Đồng thời**: Tối đa 20 người/khung hình
 
-## 🛠️ Development
+## 🛠️ Phát triển
 
 ### Cấu trúc thư mục
 ```
 ├── backend/
-│   ├── app.py              # Flask backend
-│   ├── database.py         # Database operations
-│   └── requirements.txt    # Python dependencies
+│   ├── app.py              # Flask backend chính
+│   ├── database.py         # Thao tác cơ sở dữ liệu
+│   └── requirements.txt    # Thư viện Python
 ├── frontend/
-│   ├── index.html          # Main interface
-│   ├── admin.html          # Admin panel
-│   ├── login.html          # Login page
-│   └── script.js           # Frontend logic
-├── docker-compose.yml      # Container orchestration
-├── camera-host-stream.py   # Windows camera stream
+│   ├── index.html          # Giao diện chính
+│   ├── admin.html          # Trang quản trị
+│   ├── login.html          # Trang đăng nhập
+│   └── script.js           # Logic JavaScript
+├── docker-compose.yml      # Điều phối container
+├── camera-host-stream.py   # Stream camera Windows
 └── README.md
 ```
 
-### API Endpoints
-```
-GET  /video_feed           # Video stream
-GET  /latest_analysis      # Current analytics
-POST /auth/login           # Authentication
-GET  /api/events           # Event management
-GET  /api/employees        # Staff management
-POST /analyze              # Image analysis
-```
+### Công nghệ sử dụng
+- **Backend**: Flask + DeepFace + OpenCV
+- **Frontend**: HTML/JS + Bootstrap 5
+- **Database**: Redis
+- **AI**: DeepFace cho nhận diện khuôn mặt
+- **Container**: Docker + Docker Compose
 
+### API chính
+```
+GET  /video_feed           # Stream video
+GET  /latest_analysis      # Phân tích hiện tại
+POST /auth/login           # Đăng nhập
+GET  /api/events           # Quản lý sự kiện
+GET  /api/employees        # Quản lý nhân viên
+POST /analyze              # Phân tích ảnh
+```
 
 *Phát triển bởi nhóm sinh viên UET VNU cho môn Thực hành phát triển hệ thống trí tuệ nhân tạo*
